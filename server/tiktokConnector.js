@@ -24,6 +24,13 @@ function errorText(err) {
   return msg;
 }
 
+// "⚖️: gifted the host 1 Rose" / "sent Rose" → "Rose"
+function nameFromDescribe(text) {
+  const t = String(text || '');
+  const m = t.match(/(?:gifted the host|sent)\s+(?:\d+\s*x?\s*)?(.+?)\s*$/i);
+  return m ? m[1].trim() : '';
+}
+
 function normalizeUser(user = {}) {
   const userId = String(user.userId || user.id || user.idStr || user.uniqueId || 'unknown');
   const username = user.uniqueId || user.displayId || user.nickname || userId;
@@ -79,28 +86,30 @@ class TikTokConnector extends EventEmitter {
       this.emit('comment', { ...user, comment });
     });
 
-    // GIFT — streakable gifts (giftType 1) fire on every combo step.
-    // We process the delta each time so the screen reacts instantly.
+    // GIFT
+    // TikTok now often sends gift events with an empty giftDetails (no name, no giftType).
+    // The name is then only in common.describe: "⚖️: gifted the host 1 Rose".
+    // Every send also arrives as several events (in progress… then repeatEnd), so we
+    // always count the DELTA of repeatCount per streak, whatever the gift type.
     this.connection.on('gift', (data) => {
       const details = data.giftDetails || data.gift || {};
       const user = normalizeUser(data.user);
-      // TikTok often leaves giftName empty now; "describe" usually reads "sent Rose"
-      const described = String(details.describe || data.describe || '').replace(/^\s*sent\s+/i, '').trim();
-      const giftName = details.giftName || data.giftName || described || `Gift #${data.giftId || '?'}`;
+      const giftName = details.giftName || data.giftName
+        || nameFromDescribe(data.common?.describe) || nameFromDescribe(details.describe)
+        || `Gift #${data.giftId || '?'}`;
       const coins = details.diamondCount || data.diamondCount || 0;
-      const giftType = details.giftType ?? data.giftType;
       const repeatCount = data.repeatCount || 1;
       const giftImage = firstUrl(details.giftImage) || firstUrl(details.icon) || data.giftPictureUrl || null;
 
-      let count = repeatCount;
-      if (giftType === 1) {
-        const key = `${user.userId}:${data.groupId || data.giftId}`;
-        const prev = this.streaks.get(key) || 0;
-        count = Math.max(0, repeatCount - prev);
-        if (data.repeatEnd) this.streaks.delete(key);
-        else this.streaks.set(key, repeatCount);
-        if (count === 0) return;
-      }
+      const now = Date.now();
+      const key = `${user.userId}:${data.giftId}:${data.groupId || ''}`;
+      const prev = this.streaks.get(key);
+      // a streak not updated for a while is over (in case its repeatEnd never arrived)
+      const prevCount = prev && now - prev.t < 15000 ? prev.count : 0;
+      const count = Math.max(0, repeatCount - prevCount);
+      if (data.repeatEnd) this.streaks.delete(key);
+      else this.streaks.set(key, { count: Math.max(repeatCount, prevCount), t: now });
+      if (count === 0) return;
 
       this.emit('gift', { ...user, giftName, coins, repeatCount: count, giftImage });
     });
