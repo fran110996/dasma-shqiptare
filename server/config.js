@@ -14,7 +14,7 @@ module.exports = {
     { key: 'shoqja',   gift: 'Paper Crane', aliases: [],                       coins: 99,  label: 'Shoqja e nuses',    icon: '🕊️', role: 'bridesmaid' },
     { key: 'bakshish', gift: 'Confetti',    aliases: [],                       coins: 100, label: 'Bakshish',          icon: '🎉', role: 'money' },
     { key: 'shok',     gift: 'Hearts',      aliases: [],                       coins: 199, label: 'Shoku i dhëndrrit', icon: '💕', role: 'bestman' },
-    { key: 'dolli',    gift: 'Semsemia',    aliases: ['Sem Sem', 'Semsem'],    coins: 200, label: 'Dolli për çiftin',  icon: '🥂', role: 'toast' },
+    { key: 'dolli',    gift: 'Semsemia',    aliases: ['Sem Sem', 'Semsem'],    coins: 200, label: 'Dolli për çiftin',  icon: '🪕', role: 'toast' },
     { key: 'nusja',    gift: 'Pink Cowboy', aliases: ['Cowboy'],               coins: 450, label: 'Nusja',             icon: '🤠', role: 'bride' },
     { key: 'dhendri',  gift: 'Train',       aliases: [],                       coins: 899, label: 'Dhëndri',           icon: '🚂', role: 'groom' },
   ],

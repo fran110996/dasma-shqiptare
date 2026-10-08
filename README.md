@@ -9,7 +9,7 @@ Viewers send gifts during your TikTok LIVE and join an Albanian wedding on scree
 | 🕊️ Paper Crane | 99 | **Shoqja e nuses**: bride's friend (bride's side) |
 | 🎉 Confetti | 100 | **Bakshish**: money rain that piles up on the floor |
 | 💕 Hearts | 199 | **Shoku i dhëndrrit**: groom's best man (with hat & mustache) |
-| 🥂 Semsemia | 200 | **Dolli për çiftin**: everyone raises a glass and toasts the couple |
+| 🪕 Semsemia | 200 | **Dolli për çiftin**: everyone raises a glass and toasts the couple |
 | 🤠 Pink Cowboy | 450 | **Nusja**: you become the bride |
 | 🚂 Train | 899 | **Dhëndri**: you become the groom |
 
