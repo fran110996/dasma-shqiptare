@@ -19,6 +19,13 @@ module.exports = {
     { key: 'dhendri',  gift: 'Train',       aliases: [],                       coins: 899, label: 'Dhëndri',           icon: '🚂', role: 'groom' },
   ],
 
+  // A viewer who sends this many likes (in total) joins the dance
+  likesToJoin: 1000,
+
+  // Gift legend: cards shown at once (it rotates pages so text stays readable on phones)
+  legendPerPage: 3,
+  legendPageSeconds: 5,
+
   // Any gift worth at least this many coins also puts the sender in the dance
   joinDanceMinCoins: 10,
   maxDancers: 16,
@@ -52,6 +59,8 @@ module.exports = {
     share: '{name} ftoi miqtë në dasmë!',
     follow: '{name} u bë mik i dasmës!',
     joinedDance: '{name} u fut në valle!',
+    likesJoined: '{name} u fut në valle me 1000 like! ❤️',
+    likesCard: '1000 Like',
     bakshish: '{name} hodhi bakshish!',
     drummer: '{name} i bie tupanit!',
     leaderboardTitle: 'BUJARËT E DASMËS',

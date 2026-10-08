@@ -6,6 +6,7 @@ Viewers send gifts during your TikTok LIVE and join an Albanian wedding on scree
 |---|---|---|
 | 🌹 Rose | 1 | **Tupan**: you play the drum (live 7/8 drum beat, +4s per rose) |
 | 💐 Rosa | 10 | **Futesh në valle**: you join the circle dance |
+| ❤️ 1000 likes | — | **Futesh në valle**: a viewer who sends 1000 likes in total joins the dance |
 | 🕊️ Paper Crane | 99 | **Shoqja e nuses**: bride's friend (bride's side) |
 | 🎉 Confetti | 100 | **Bakshish**: money rain that piles up on the floor |
 | 💕 Hearts | 199 | **Shoku i dhëndrrit**: groom's best man (with hat & mustache) |

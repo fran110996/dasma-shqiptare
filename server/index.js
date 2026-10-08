@@ -142,6 +142,7 @@ app.post('/api/test', (req, res) => {
     case 'gift': sim.gift(key, Number(count) || 1); break;
     case 'comment': sim.comment(text); break;
     case 'like': sim.like(Number(count) || 50); break;
+    case 'like1k': sim.like(require('./config').likesToJoin); break;
     case 'join': sim.join(); break;
     case 'share': sim.share(); break;
     case 'follow': sim.follow(); break;

@@ -50,22 +50,53 @@
   Sfx.onTrack = updateNowPlaying;
 
   // ---------- legend ----------
-  let legendKey = '';
-  function renderLegend(gifts) {
-    const key = JSON.stringify(gifts.map(g => [g.key, g.image, g.label]));
+  // Gift legend: shows a few big cards at a time and rotates pages
+  let legendKey = '', legendCards = [], legendPage = 0, legendTimer = null, perPage = 3, pageMs = 5000;
+  function cardHtml(g) {
+    const icon = g.image ? `<img src="${esc(g.image)}" referrerpolicy="no-referrer" onerror="this.replaceWith(document.createTextNode('${g.icon}'))">` : g.icon;
+    const price = g.coins != null ? ` <b>${g.coins}<i class="coin"></i></b>` : '';
+    return `<div class="gcard" data-key="${g.key}"><div class="gi">${icon}</div>
+      <div class="gt"><div class="gl">${esc(g.label)}</div><div class="gn">${esc(g.gift)}${price}</div></div></div>`;
+  }
+  function showLegendPage(page, animate = true) {
+    const pages = Math.max(1, Math.ceil(legendCards.length / perPage));
+    legendPage = ((page % pages) + pages) % pages;
+    const html = legendCards.slice(legendPage * perPage, legendPage * perPage + perPage).map(cardHtml).join('');
+    const el = $('legend');
+    if (!animate) { el.innerHTML = html; return; }
+    el.classList.add('fade');
+    setTimeout(() => { el.innerHTML = html; el.classList.remove('fade'); }, 350);
+  }
+  function startLegendTimer() {
+    clearInterval(legendTimer);
+    legendTimer = setInterval(() => showLegendPage(legendPage + 1), pageMs);
+  }
+  function renderLegend(cfg) {
+    const cards = [...cfg.gifts];
+    if (cfg.likesToJoin) {
+      const dance = cfg.gifts.find(g => g.role === 'dancer');
+      cards.splice(2, 0, { key: 'likes', icon: '❤️', gift: cfg.texts.likesCard || `${cfg.likesToJoin} Like`, coins: null, label: dance ? dance.label : 'Valle' });
+    }
+    const key = JSON.stringify(cards.map(g => [g.key, g.image, g.label, g.gift]));
+    perPage = cfg.legendPerPage || 3;
+    pageMs = (cfg.legendPageSeconds || 5) * 1000;
     if (key === legendKey) return;
     legendKey = key;
-    $('legend').innerHTML = gifts.map(g => `
-      <div class="gcard" data-key="${g.key}">
-        <div class="gi">${g.image ? `<img src="${esc(g.image)}" referrerpolicy="no-referrer" onerror="this.replaceWith(document.createTextNode('${g.icon}'))">` : g.icon}</div>
-        <div class="gn">${esc(g.gift)} <b>${g.coins}<i class="coin"></i></b></div>
-        <div class="gl">${esc(g.label)}</div>
-      </div>`).join('');
+    legendCards = cards;
+    showLegendPage(legendPage, false);
+    startLegendTimer();
   }
+  // a gift arrived: jump to the page that shows it and flash the card
   function hitCard(key) {
-    const el = document.querySelector(`.gcard[data-key="${key}"]`);
-    if (!el) return;
-    el.classList.remove('hit'); void el.offsetWidth; el.classList.add('hit');
+    const i = legendCards.findIndex(g => g.key === key);
+    if (i < 0) return;
+    const page = Math.floor(i / perPage);
+    const flash = () => {
+      const el = document.querySelector(`.gcard[data-key="${key}"]`);
+      if (el) { el.classList.remove('hit'); void el.offsetWidth; el.classList.add('hit'); }
+    };
+    if (page !== legendPage) { showLegendPage(page); setTimeout(flash, 380); } else flash();
+    startLegendTimer();
   }
 
   // ---------- leaderboard ----------
@@ -129,6 +160,10 @@
   function hints() {
     if (!state) return [];
     const g = state.config.gifts.map(x => ({ icon: x.icon, image: x.image, html: `${esc(x.gift)} = <span class="name">${esc(x.label)}</span>` }));
+    if (state.config.likesToJoin) {
+      const dance = state.config.gifts.find(x => x.role === 'dancer');
+      g.splice(2, 0, { icon: '❤️', html: `${esc(texts.likesCard)} = <span class="name">${esc(dance ? dance.label : '')}</span>` });
+    }
     return [...g, { icon: '👑', html: esc(texts.kumbariHint) }, { icon: '💬', html: esc(texts.jumpHint) }];
   }
   function showTicker(item) {
@@ -202,7 +237,7 @@
     $('boardTitle').textContent = texts.leaderboardTitle;
     $('qejfTitle').textContent = texts.qejf;
     $('cakeTitle').textContent = texts.cake;
-    renderLegend(s.config.gifts);
+    renderLegend(s.config);
     renderBoard(s.leaderboard);
     renderMeters(s);
     Scene.sync(s);
@@ -246,7 +281,8 @@
         break;
       case 'dancer':
         if (ev.added) {
-          pushTicker({ avatar: u.avatar, html: fmtText(texts.joinedDance, { name: nameSpan(u.name) }) });
+          pushTicker({ avatar: u.avatar, html: fmtText(ev.viaLikes ? texts.likesJoined : texts.joinedDance, { name: nameSpan(u.name) }) });
+          if (ev.viaLikes) { hitCard('likes'); Scene.hearts(560, 900, 14, 120); }
           Sfx.pop();
         } else Scene.sparkleUser(u.id);
         break;

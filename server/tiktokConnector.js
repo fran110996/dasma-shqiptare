@@ -84,7 +84,9 @@ class TikTokConnector extends EventEmitter {
     this.connection.on('gift', (data) => {
       const details = data.giftDetails || data.gift || {};
       const user = normalizeUser(data.user);
-      const giftName = details.giftName || data.giftName || 'Gift';
+      // TikTok often leaves giftName empty now; "describe" usually reads "sent Rose"
+      const described = String(details.describe || data.describe || '').replace(/^\s*sent\s+/i, '').trim();
+      const giftName = details.giftName || data.giftName || described || `Gift #${data.giftId || '?'}`;
       const coins = details.diamondCount || data.diamondCount || 0;
       const giftType = details.giftType ?? data.giftType;
       const repeatCount = data.repeatCount || 1;

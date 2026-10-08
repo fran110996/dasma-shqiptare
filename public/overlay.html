@@ -77,20 +77,24 @@
   @keyframes tickerIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
   /* ---------- Gift legend ---------- */
-  #legend { left: 16px; top: 366px; width: 1048px; display: flex; gap: 6px; }
+  /* a few big cards at a time (pages rotate) so they stay readable on a phone */
+  #legend { left: 16px; top: 366px; width: 1048px; height: 118px; display: flex; gap: 10px; transition: opacity .35s; }
+  #legend.fade { opacity: 0; }
   .gcard {
-    flex: 1; min-width: 0; height: 118px; border-radius: 18px; padding: 5px 4px 5px;
+    flex: 1; min-width: 0; height: 118px; border-radius: 20px; padding: 8px 14px 8px 10px;
     background: linear-gradient(180deg, rgba(70,8,12,.92), rgba(25,3,5,.92));
     border: 3px solid var(--gold-deep);
     box-shadow: inset 0 0 0 2px rgba(255,220,120,.18), 0 6px 14px rgba(0,0,0,.5);
-    display: flex; flex-direction: column; align-items: center; justify-content: space-between;
+    display: flex; flex-direction: row; align-items: center; gap: 12px;
     position: relative; overflow: hidden;
   }
-  .gcard .gi { width: 40px; height: 40px; flex: none; display: grid; place-items: center; font-size: 32px; line-height: 1; }
-  .gcard .gi img { width: 40px; height: 40px; object-fit: contain; }
-  .gcard .gn { font-size: 12.5px; font-weight: 700; color: #f1d9b5; line-height: 1.05; text-align: center; max-width: 100%; }
-  .gcard .gn b { color: #fff; white-space: nowrap; }
-  .gcard .gl { font-size: 18px; font-weight: 800; color: var(--gold); line-height: 1; text-align: center; text-shadow: 0 2px 0 #000; min-height: 2em; display: flex; align-items: center; }
+  .gcard .gi { width: 84px; height: 84px; flex: none; display: grid; place-items: center; font-size: 66px; line-height: 1;
+    border-radius: 16px; background: radial-gradient(circle, rgba(255,210,120,.22), transparent 70%); }
+  .gcard .gi img { width: 84px; height: 84px; object-fit: contain; }
+  .gcard .gt { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+  .gcard .gn { font-size: 22px; font-weight: 700; color: #f1d9b5; line-height: 1.05; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .gcard .gn b { color: #fff; }
+  .gcard .gl { font-size: 30px; font-weight: 800; color: var(--gold); line-height: 1; text-shadow: 0 2px 0 #000; }
   .gcard.hit { animation: cardHit .7s ease-out; }
   .gcard.hit::after {
     content: ''; position: absolute; inset: 0; border-radius: 16px;

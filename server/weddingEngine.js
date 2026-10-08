@@ -196,6 +196,14 @@ class WeddingEngine {
     const count = data.likeCount || 1;
     this.stats.likes += count;
     this.addQejf(count * config.qejfPerLike);
+    // N likes in total → this viewer joins the dance (once)
+    const before = u.likes || 0;
+    u.likes = before + count;
+    if (before < config.likesToJoin && u.likes >= config.likesToJoin && !this.isInScene(u.userId)) {
+      this.addDancer(u.userId);
+      this.log(`❤️ ${u.nickname} reached ${config.likesToJoin} likes → Futesh në valle`);
+      this.fx('dancer', { user: this.publicUser(u), added: true, viaLikes: true, text: fmt(config.texts.likesJoined, { name: u.nickname }) });
+    }
     this.fx('like', { user: this.publicUser(u), count, inScene: this.isInScene(u.userId) });
     this.broadcast();
   }
@@ -355,6 +363,9 @@ class WeddingEngine {
         gifts: config.gifts.map(g => ({ ...g, image: this.giftImages[g.gift.toLowerCase()] || null })),
         texts: config.texts,
         maxDancers: config.maxDancers,
+        likesToJoin: config.likesToJoin,
+        legendPerPage: config.legendPerPage,
+        legendPageSeconds: config.legendPageSeconds,
       },
       dancers: dancers.map(get),
       bride: get(this.bride),

@@ -88,8 +88,8 @@ class Simulator extends EventEmitter {
     this.emit('comment', { ...this.user(userIndex), comment: text || rand(COMMENTS) });
   }
 
-  like(count = null) {
-    this.emit('like', { ...this.user(), likeCount: count || 5 + Math.floor(Math.random() * 25) });
+  like(count = null, userIndex = null) {
+    this.emit('like', { ...this.user(userIndex), likeCount: count || 5 + Math.floor(Math.random() * 25) });
   }
 
   // Scripted ~55s sequence that shows every feature (great for demo videos)
@@ -112,6 +112,7 @@ class Simulator extends EventEmitter {
       [27000, g('valle', 18)], [27600, g('valle', 19)], [28200, g('valle', 23)], [28800, g('valle', 24)],
       [29400, () => this.follow()], [30000, c('HOP', 18)], [30300, c('hop hop', 19)],
       [31000, g('tupan', 3, 10)],
+      [32000, () => this.like(config.likesToJoin, 30)],
       [32500, g('bakshish', 4, 3)],
       [34500, g('shok', 5)],
       [37000, g('shoqja', 15)],
