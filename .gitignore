@@ -3,5 +3,5 @@ node_modules
 data/*.json
 demo/
 .claude/
-public/music/*
-!public/music/.gitkeep
+# original song files (the normalized copies live in public/music)
+/music/

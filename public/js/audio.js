@@ -146,7 +146,8 @@ const Sfx = (() => {
 
     // Background music: files from /public/music (optional)
     async loadMusic(list) {
-      playlist = list || [];
+      // random order so every LIVE doesn't start with the same song
+      playlist = [...(list || [])].sort(() => Math.random() - 0.5);
       track = 0;
       if (!playlist.length) return null;
       music.src = playlist[0].url;
