@@ -188,6 +188,7 @@
 
   // ---------- socket ----------
   const socket = io();
+  socket.on('connect', () => socket.emit('hello', { role: params.get('sound') === '0' ? 'preview' : 'overlay' }));
 
   socket.on('state', s => {
     const hadDrummer = !!state?.drummer;

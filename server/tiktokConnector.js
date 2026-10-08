@@ -16,6 +16,14 @@ function firstUrl(img) {
   return list.find(u => /\.(jpe?g|webp|png)/i.test(u)) || list.find(u => !/\.heic/i.test(u)) || null;
 }
 
+// Library errors are objects like { info, exception } — turn them into one readable line
+function errorText(err) {
+  const msg = err?.exception?.message || err?.info || err?.message || String(err);
+  if (/Room ID|user_not_found|not found/i.test(msg)) return 'User not found or not LIVE right now';
+  if (/retry-after|rate limit|429/i.test(msg)) return 'TikTok rate limit, wait 1-2 minutes and try again';
+  return msg;
+}
+
 function normalizeUser(user = {}) {
   const userId = String(user.userId || user.id || user.idStr || user.uniqueId || 'unknown');
   const username = user.uniqueId || user.displayId || user.nickname || userId;
@@ -49,19 +57,18 @@ class TikTokConnector extends EventEmitter {
 
     this.connection.on('connected', (state) => {
       this.isConnected = true;
-      console.log(`[TikTokConnector] ✅ Connected to @${this.creatorUsername}`);
       this.emit('connected', { username: this.creatorUsername, state });
     });
 
     this.connection.on('disconnected', () => {
       this.isConnected = false;
-      console.log('[TikTokConnector] Disconnected');
       this.emit('disconnected');
     });
 
+    // Errors while connecting are reported once by connect() below
     this.connection.on('error', (err) => {
-      console.error('[TikTokConnector] Error:', err?.message || err);
-      this.emit('error', err);
+      if (!this.isConnected) return;
+      this.emit('error', new Error(errorText(err)));
     });
 
     // COMMENT
@@ -92,7 +99,6 @@ class TikTokConnector extends EventEmitter {
         if (count === 0) return;
       }
 
-      console.log(`[TikTokConnector] 🎁 ${user.nickname}: ${giftName} x${count} (${coins} coins)`);
       this.emit('gift', { ...user, giftName, coins, repeatCount: count, giftImage });
     });
 
@@ -116,11 +122,10 @@ class TikTokConnector extends EventEmitter {
       // endpoint needs a paid EulerStream plan, see fetchGiftCatalog)
       return await this.connection.connect();
     } catch (err) {
-      console.error('[TikTokConnector] Failed to connect:', err.message);
-      if (err.message && (err.message.includes('retry-after') || err.message.includes('Cannot read properties of undefined'))) {
+      if (/retry-after|Cannot read properties of undefined/.test(err?.message || '')) {
         throw new Error('TikTok connection rate limit / cooldown. Make sure the LIVE is broadcasting and wait 1-2 minutes before connecting again.');
       }
-      throw err;
+      throw new Error(errorText(err));
     }
   }
 

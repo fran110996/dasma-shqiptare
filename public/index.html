@@ -54,6 +54,7 @@
   <h1>💍 Dasma <span>Shqiptare</span></h1>
   <span class="pill" id="liveStatus">● Not connected</span>
   <span class="pill" id="simStatus" hidden>🎭 Demo running</span>
+  <span class="pill" id="obsStatus">📺 Overlay: not open</span>
 </header>
 <main>
   <div>
@@ -170,6 +171,8 @@
     $('liveStatus').textContent = s.connected ? `● LIVE @${s.username}` : '● Not connected';
     $('liveStatus').classList.toggle('on', s.connected);
     $('simStatus').hidden = !s.simulating;
+    $('obsStatus').textContent = s.overlays ? `📺 Overlay open${s.overlays > 1 ? ' ×' + s.overlays : ''}` : '📺 Overlay: not open';
+    $('obsStatus').classList.toggle('on', s.overlays > 0);
     $('simStatus').classList.add('sim');
     $('simBtn').textContent = s.simulating ? '■ Stop auto demo' : '▶ Start auto demo';
   });

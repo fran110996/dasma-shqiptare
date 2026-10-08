@@ -56,11 +56,24 @@ for (const source of [tiktok, sim]) {
 }
 tiktok.on('gifts:catalog', gifts => game.onGiftCatalog(gifts));
 
+// One-line activity summary per minute while LIVE, to confirm events are flowing
+const minute = { joins: 0, likes: 0, comments: 0, gifts: 0 };
+tiktok.on('join', () => minute.joins++);
+tiktok.on('like', d => { minute.likes += d.likeCount || 1; });
+tiktok.on('comment', () => minute.comments++);
+tiktok.on('gift', d => { minute.gifts += d.repeatCount || 1; });
+setInterval(() => {
+  if (!tiktok.isConnected) return;
+  game.log(`📊 Last minute: ${minute.joins} joins · ${minute.likes} likes · ${minute.comments} comments · ${minute.gifts} gifts`);
+  Object.keys(minute).forEach(k => { minute[k] = 0; });
+}, 60000);
+
 function status() {
   return {
     connected: tiktok.isConnected,
     username: tiktok.creatorUsername,
     simulating: sim.running,
+    overlays,
     simSpeed: sim.speed,
   };
 }
@@ -76,11 +89,13 @@ tiktok.on('error', err => game.log(`❌ ${err?.message || err}`));
 app.post('/api/connect', async (req, res) => {
   const { username, sessionId } = req.body || {};
   if (!username) return res.status(400).json({ error: 'username required' });
+  game.log(`🔌 Connecting to @${username.replace(/^@/, '')}…`);
   try {
     await tiktok.connect(username, sessionId || process.env.SESSION_ID || null);
     pushStatus();
     res.json({ ok: true });
   } catch (err) {
+    game.log(`❌ Connection to @${username} failed: ${err.message}`);
     pushStatus();
     res.status(500).json({ error: err.message || 'Connection failed' });
   }
@@ -128,6 +143,7 @@ app.post('/api/test', (req, res) => {
 
 app.post('/api/reset', (req, res) => {
   game.reset();
+  game.log('♻ Wedding reset');
   res.json({ ok: true });
 });
 
@@ -154,7 +170,22 @@ app.get('/overlay', (req, res) => res.sendFile(path.join(__dirname, '../public/o
 // -------------------------------------------------------
 // Socket.io
 // -------------------------------------------------------
+// Count open overlays so we can tell if OBS is actually showing the game
+let overlays = 0;
 io.on('connection', socket => {
+  socket.on('hello', ({ role } = {}) => {
+    if (role !== 'overlay' || socket.data.overlay) return;
+    socket.data.overlay = true;
+    overlays++;
+    game.log(`📺 Overlay opened (${overlays} open)`);
+    pushStatus();
+  });
+  socket.on('disconnect', () => {
+    if (!socket.data.overlay) return;
+    overlays--;
+    game.log(`📺 Overlay closed (${overlays} open)`);
+    pushStatus();
+  });
   socket.emit('state', game.snapshot());
   socket.emit('status', status());
   socket.emit('settings', settings);
