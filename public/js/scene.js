@@ -975,7 +975,7 @@ const Scene = (() => {
         const pose = { bob: -clap * 2, sway: 0, lf: { x: -9, y: 0 }, rf: { x: 9, y: 0 },
           hands: [{ x: -4 - clap * 10, y: -104, bend: 10 }, { x: 4 + clap * 10, y: -104, bend: 10 }] };
         if (e) { e.x = P.x; e.y = P.y; e.s = P.s; items.push({ e, pose }); }
-        else items.push({ ghost: role, x: P.x, y: P.y, s: P.s, pose });
+        else items.push({ ghost: role, x: P.x, y: P.y, s: P.s, pose, noLabel: i === 1 && !list.some(x => !x.leaving && x.slot === 0) });
       }
     }
     // ---- drummer ----
@@ -1075,7 +1075,7 @@ const Scene = (() => {
       c.font = `${R * 1.15}px ${FONT}`; c.textAlign = 'center'; c.textBaseline = 'middle';
       c.fillStyle = '#fff';
       c.fillText(g ? g.icon : '?', 0, headY + 2);
-      if (g) {
+      if (g && !it.noLabel) {
         c.globalAlpha = 0.95;
         c.font = `800 18px ${FONT}`;
         const label = `${g.gift}`, w = c.measureText(label).width + 18;
