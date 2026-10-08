@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dasma Shqiptare — Control Panel</title>
+<link rel="icon" href="data:,">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Lilita+One&display=swap" rel="stylesheet">
+<style>
+  :root { --bg: #140306; --panel: #22070b; --line: #4a1a1f; --red: #e41e20; --gold: #f6c544; --text: #f6e9dc; --muted: #b99a90; --ok: #3ccf7a; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: radial-gradient(circle at 30% 0%, #3a070d, var(--bg) 60%); color: var(--text); font-family: 'Baloo 2', system-ui, sans-serif; min-height: 100vh; }
+  header { display: flex; align-items: center; gap: 14px; padding: 18px 28px; border-bottom: 1px solid var(--line); }
+  header h1 { margin: 0; font-family: 'Lilita One', sans-serif; font-weight: 400; font-size: 30px; letter-spacing: 1px; }
+  header h1 span { color: var(--red); }
+  .pill { padding: 4px 14px; border-radius: 20px; font-weight: 800; font-size: 14px; background: #3a1418; color: var(--muted); }
+  .pill.on { background: rgba(60,207,122,.15); color: var(--ok); }
+  .pill.sim { background: rgba(246,197,68,.15); color: var(--gold); }
+  main { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 22px; padding: 22px 28px; max-width: 1400px; }
+  @media (max-width: 1000px) { main { grid-template-columns: 1fr; } }
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 18px 20px; margin-bottom: 18px; }
+  h2 { margin: 0 0 12px; font-size: 15px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--gold); }
+  label { font-size: 13px; color: var(--muted); font-weight: 700; display: block; margin-bottom: 4px; }
+  input, select { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line); background: #12020a; color: var(--text); font: inherit; font-size: 16px; }
+  .row { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
+  .row > div { flex: 1; min-width: 160px; }
+  button { font: inherit; font-weight: 800; font-size: 15px; border: none; border-radius: 10px; padding: 10px 16px; cursor: pointer; background: #3a1418; color: var(--text); transition: transform .08s, filter .15s; }
+  button:hover { filter: brightness(1.25); } button:active { transform: scale(.96); }
+  button.primary { background: var(--red); color: #fff; }
+  button.gold { background: var(--gold); color: #2a0a0c; }
+  .gifts { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+  .gift { background: #12020a; border: 1px solid var(--line); border-radius: 12px; padding: 10px; text-align: center; }
+  .gift .ic { font-size: 30px; height: 40px; display: grid; place-items: center; }
+  .gift .ic img { width: 38px; height: 38px; object-fit: contain; }
+  .gift .nm { font-size: 13px; color: var(--muted); }
+  .gift .lb { font-weight: 800; color: var(--gold); margin-bottom: 6px; }
+  .gift .btns { display: flex; gap: 6px; justify-content: center; }
+  .gift button { padding: 6px 10px; font-size: 13px; }
+  .quick { display: flex; flex-wrap: wrap; gap: 8px; }
+  .url { display: flex; gap: 8px; } .url input { font-family: ui-monospace, monospace; font-size: 14px; }
+  #log { height: 420px; overflow-y: auto; font-size: 14px; line-height: 1.5; font-family: ui-monospace, monospace; color: var(--muted); }
+  #log div { border-bottom: 1px solid #2b0c10; padding: 3px 0; }
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; text-align: center; }
+  .stats b { display: block; font-size: 26px; color: var(--gold); line-height: 1.1; }
+  .stats span { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+  .preview { width: 100%; aspect-ratio: 9 / 16; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: #000; }
+  .preview iframe { width: 100%; height: 100%; border: 0; }
+  small.help { color: var(--muted); display: block; margin-top: 8px; font-size: 13px; }
+  .err { color: #ff7b7b; font-weight: 700; margin-top: 8px; min-height: 1em; }
+</style>
+</head>
+<body>
+<header>
+  <h1>💍 Dasma <span>Shqiptare</span></h1>
+  <span class="pill" id="liveStatus">● Not connected</span>
+  <span class="pill" id="simStatus" hidden>🎭 Demo running</span>
+</header>
+<main>
+  <div>
+    <section>
+      <h2>TikTok LIVE</h2>
+      <div class="row">
+        <div><label>TikTok username</label><input id="username" placeholder="@username"></div>
+        <div style="flex:0"><button class="primary" id="connectBtn">Connect</button></div>
+        <div style="flex:0"><button id="disconnectBtn">Disconnect</button></div>
+      </div>
+      <div class="err" id="err"></div>
+      <small class="help">You must be LIVE on TikTok before connecting.</small>
+    </section>
+
+    <section>
+      <h2>OBS overlay</h2>
+      <div class="url"><input id="overlayUrl" readonly><button class="gold" id="copyBtn">Copy</button></div>
+      <small class="help">OBS → Sources → Browser → paste the URL · Width <b>1080</b> · Height <b>1920</b> · tick “Control audio via OBS”.</small>
+    </section>
+
+    <section>
+      <h2>Test gifts</h2>
+      <div class="gifts" id="gifts"></div>
+    </section>
+
+    <section>
+      <h2>Test events & demo</h2>
+      <div class="quick">
+        <button class="primary" id="showBtn">🎬 Showcase (45s)</button>
+        <button class="gold" id="simBtn">▶ Start auto demo</button>
+        <select id="simSpeed" style="width:auto"><option value="0.5">Calm</option><option value="1" selected>Normal</option><option value="2">Busy</option><option value="3.5">Crazy</option></select>
+        <button data-test="like">❤️ 50 likes</button>
+        <button data-test="join">👋 Join</button>
+        <button data-test="share">🔗 Share</button>
+        <button data-test="follow">➕ Follow</button>
+        <button data-test="comment" data-text="HOP 🕺">💬 “HOP”</button>
+        <button id="resetBtn">♻ Reset wedding</button>
+      </div>
+    </section>
+
+    <section>
+      <h2>Audio</h2>
+      <div class="row">
+        <div><label>Volume</label><input type="range" id="vol" min="0" max="1" step="0.05" value="0.7"></div>
+        <div style="flex:0;min-width:auto"><label>&nbsp;</label><button id="musicBtn">🎵 Music: on</button></div>
+      </div>
+      <small class="help">Put your own .mp3 songs in <code>public/music/</code> and they play on a loop. Drums & effects are built in.</small>
+    </section>
+  </div>
+
+  <div>
+    <section>
+      <h2>Live stats</h2>
+      <div class="stats">
+        <div><b id="stGifts">0</b><span>Gifts</span></div>
+        <div><b id="stCoins">0</b><span>Coins</span></div>
+        <div><b id="stLikes">0</b><span>Likes</span></div>
+      </div>
+    </section>
+    <section>
+      <h2>Preview</h2>
+      <div class="preview"><iframe src="/overlay?sound=0" title="Overlay preview"></iframe></div>
+    </section>
+    <section>
+      <h2>Event log</h2>
+      <div id="log"></div>
+    </section>
+  </div>
+</main>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  const $ = id => document.getElementById(id);
+  const post = async (url, body = {}) => {
+    const send = () => fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-key': localStorage.getItem('dasma:key') || '' }, body: JSON.stringify(body) }).then(r => r.json());
+    let r = await send();
+    if (r.auth) {
+      const key = prompt('Password:');
+      if (!key) return r;
+      localStorage.setItem('dasma:key', key);
+      r = await send();
+      if (r.auth) { localStorage.removeItem('dasma:key'); alert('Wrong password'); }
+    }
+    return r;
+  };
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+  const socket = io();
+  let status = {}, settings = { volume: 0.7, music: true }, giftsKey = '';
+
+  $('overlayUrl').value = location.origin + '/overlay';
+  $('username').value = localStorage.getItem('dasma:user') || '';
+  $('copyBtn').onclick = () => { navigator.clipboard.writeText($('overlayUrl').value); $('copyBtn').textContent = 'Copied!'; setTimeout(() => $('copyBtn').textContent = 'Copy', 1200); };
+
+  $('connectBtn').onclick = async () => {
+    const username = $('username').value.trim().replace(/^@/, '');
+    if (!username) return;
+    localStorage.setItem('dasma:user', username);
+    $('err').textContent = ''; $('connectBtn').textContent = 'Connecting…';
+    const r = await post('/api/connect', { username });
+    $('connectBtn').textContent = 'Connect';
+    if (r.error) $('err').textContent = r.error;
+  };
+  $('showBtn').onclick = () => post('/api/sim/showcase');
+  $('disconnectBtn').onclick = () => post('/api/disconnect');
+  $('simBtn').onclick = () => status.simulating ? post('/api/sim/stop') : post('/api/sim/start', { speed: Number($('simSpeed').value) });
+  $('simSpeed').onchange = () => status.simulating && post('/api/sim/start', { speed: Number($('simSpeed').value) });
+  $('resetBtn').onclick = () => confirm('Reset leaderboard, cake and dancers?') && post('/api/reset');
+  document.querySelectorAll('[data-test]').forEach(b => b.onclick = () => post('/api/test', { type: b.dataset.test, text: b.dataset.text }));
+  $('vol').oninput = e => post('/api/settings', { volume: Number(e.target.value) });
+  $('musicBtn').onclick = () => post('/api/settings', { music: !settings.music });
+
+  socket.on('status', s => {
+    status = s;
+    $('liveStatus').textContent = s.connected ? `● LIVE @${s.username}` : '● Not connected';
+    $('liveStatus').classList.toggle('on', s.connected);
+    $('simStatus').hidden = !s.simulating;
+    $('simStatus').classList.add('sim');
+    $('simBtn').textContent = s.simulating ? '■ Stop auto demo' : '▶ Start auto demo';
+  });
+  socket.on('settings', s => { settings = s; $('vol').value = s.volume; $('musicBtn').textContent = `🎵 Music: ${s.music ? 'on' : 'off'}`; });
+  socket.on('state', s => {
+    $('stGifts').textContent = s.stats.gifts.toLocaleString();
+    $('stCoins').textContent = s.stats.coins.toLocaleString();
+    $('stLikes').textContent = s.stats.likes.toLocaleString();
+    const key = JSON.stringify(s.config.gifts.map(g => g.image));
+    if (key === giftsKey) return;
+    giftsKey = key;
+    $('gifts').innerHTML = s.config.gifts.map(g => `
+      <div class="gift">
+        <div class="ic">${g.image ? `<img src="${esc(g.image)}" referrerpolicy="no-referrer">` : g.icon}</div>
+        <div class="nm">${esc(g.gift)} · ${g.coins} coins</div>
+        <div class="lb">${esc(g.label)}</div>
+        <div class="btns"><button onclick="post('/api/test',{type:'gift',key:'${g.key}',count:1})">x1</button><button onclick="post('/api/test',{type:'gift',key:'${g.key}',count:5})">x5</button></div>
+      </div>`).join('');
+  });
+  socket.on('log', l => {
+    const el = document.createElement('div');
+    el.textContent = `${new Date(l.t).toLocaleTimeString()}  ${l.text}`;
+    $('log').prepend(el);
+    while ($('log').children.length > 200) $('log').lastChild.remove();
+  });
+</script>
+</body>
+</html>

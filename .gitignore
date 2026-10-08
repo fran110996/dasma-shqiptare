@@ -1,0 +1,7 @@
+node_modules
+.env
+data/*.json
+demo/
+.claude/
+public/music/*
+!public/music/.gitkeep
