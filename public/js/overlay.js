@@ -12,8 +12,12 @@
 
   // ---------- fit 1080x1920 into any window ----------
   function fit() {
+    // CSS zoom instead of transform: scale. Zoom lays text out on whole pixels, while a scaled
+    // layer leaves it on half pixels and it visibly jumps 1px whenever the canvas repaints.
     const k = Math.min(innerWidth / 1080, innerHeight / 1920);
-    stage.style.transform = `translate(${(innerWidth - 1080 * k) / 2}px, ${(innerHeight - 1920 * k) / 2}px) scale(${k})`;
+    stage.style.zoom = k;
+    stage.style.left = `${(innerWidth - 1080 * k) / 2 / k}px`;
+    stage.style.top = `${(innerHeight - 1920 * k) / 2 / k}px`;
   }
   addEventListener('resize', fit); fit();
 
@@ -194,7 +198,7 @@
     const hadDrummer = !!state?.drummer;
     state = s;
     texts = s.config.texts;
-    $('title').textContent = texts.title;
+    $('titleText').textContent = texts.title;
     $('boardTitle').textContent = texts.leaderboardTitle;
     $('qejfTitle').textContent = texts.qejf;
     $('cakeTitle').textContent = texts.cake;

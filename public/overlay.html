@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Dasma Shqiptare — Overlay</title>
+<title>Ahengu Shqiptare — Overlay</title>
 <link rel="icon" href="data:,">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -32,13 +32,19 @@
 
   /* ---------- Title ---------- */
   #title {
-    left: 50%; top: 168px; transform: translateX(-50%);
+    /* centered without translate(-50%): half-pixel offsets made nearby text shimmer when scaled */
+    left: 0; right: 0; margin: 0 auto; width: fit-content; top: 168px;
     padding: 6px 64px 14px; border-radius: 26px;
     background: linear-gradient(180deg, #ff4146 0%, #e41e20 45%, #a50d13 100%);
     border: 5px solid var(--gold);
     box-shadow: 0 0 0 4px #5a0508, 0 14px 30px rgba(0,0,0,.55), inset 0 4px 0 rgba(255,255,255,.35), 0 0 60px rgba(255,60,40,.45);
     font-family: 'Lilita One', sans-serif; font-size: 80px; letter-spacing: 3px; white-space: nowrap;
     color: #fff; text-shadow: 0 5px 0 #6d0309, 0 8px 14px rgba(0,0,0,.5);
+  }
+  /* pulsing glow on its own layer: only opacity animates, so nothing around it gets repainted */
+  #title .glow {
+    position: absolute; inset: -5px; border-radius: 26px; z-index: -1; pointer-events: none;
+    box-shadow: 0 0 80px rgba(255,190,60,.65); opacity: .3; will-change: opacity;
     animation: titleGlow 3s ease-in-out infinite;
   }
   #title::before, #title::after {
@@ -47,13 +53,13 @@
   }
   #title::before { left: 18px; } #title::after { right: 18px; }
   @keyframes titleGlow {
-    0%,100% { box-shadow: 0 0 0 4px #5a0508, 0 14px 30px rgba(0,0,0,.55), inset 0 4px 0 rgba(255,255,255,.35), 0 0 40px rgba(255,60,40,.35); }
-    50% { box-shadow: 0 0 0 4px #5a0508, 0 14px 30px rgba(0,0,0,.55), inset 0 4px 0 rgba(255,255,255,.35), 0 0 80px rgba(255,190,60,.65); }
+    0%,100% { opacity: .3; }
+    50% { opacity: 1; }
   }
 
   /* ---------- Ticker ---------- */
   #ticker {
-    left: 50%; top: 292px; transform: translateX(-50%);
+    left: 0; right: 0; margin: 0 auto; width: fit-content; top: 292px;
     height: 60px; min-width: 520px; max-width: 980px; padding: 0 30px 0 8px;
     display: flex; align-items: center; gap: 14px;
     background: linear-gradient(180deg, #fffaf0, #f4e3bf);
@@ -176,7 +182,7 @@
 
   /* ---------- Now playing ---------- */
   #np {
-    left: 50%; top: 1244px; transform: translateX(-50%);
+    left: 0; right: 0; margin: 0 auto; width: fit-content; top: 1244px;
     display: none; align-items: center; gap: 12px; height: 52px; padding: 0 26px;
     border-radius: 30px; background: rgba(15, 2, 4, .85); border: 2px solid var(--gold-deep);
     font-size: 24px; font-weight: 800; white-space: nowrap; box-shadow: 0 6px 18px rgba(0,0,0,.6);
@@ -234,7 +240,7 @@
   <canvas id="bg" width="1080" height="1920"></canvas>
   <canvas id="scene" width="1080" height="1920"></canvas>
 
-  <div id="title" class="ui">DASMA SHQIPTARE</div>
+  <div id="title" class="ui"><span class="glow"></span><span id="titleText">AHENGU SHQIPTARE</span></div>
   <div id="ticker" class="ui"><span class="av emoji">💍</span><span class="txt">Mirë se erdhe në dasmë!</span></div>
   <div id="legend" class="ui"></div>
 

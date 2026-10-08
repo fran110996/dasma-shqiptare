@@ -47,7 +47,7 @@ module.exports = {
   jumpWords: ['hop', 'hopa', 'opa', 'valle', 'ooo', '🔥', '💃', '🕺'],
 
   texts: {
-    title: 'DASMA SHQIPTARE',
+    title: 'AHENGU SHQIPTARE',
     welcome: 'Mirë se erdhe në dasmë, {name}!',
     share: '{name} ftoi miqtë në dasmë!',
     follow: '{name} u bë mik i dasmës!',

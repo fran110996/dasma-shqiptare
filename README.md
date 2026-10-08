@@ -1,4 +1,4 @@
-# 💍 Dasma Shqiptare — TikTok LIVE interactive game
+# 💍 Ahengu Shqiptare — TikTok LIVE interactive game
 
 Viewers send gifts during your TikTok LIVE and join an Albanian wedding on screen with their profile picture.
 

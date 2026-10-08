@@ -202,7 +202,7 @@ io.on('connection', socket => {
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, async () => {
-  console.log(`\n💍 Dasma Shqiptare running at http://localhost:${PORT}`);
+  console.log(`\n💍 Ahengu Shqiptare running at http://localhost:${PORT}`);
   console.log(`📺 OBS overlay (1080x1920): http://localhost:${PORT}/overlay\n`);
   if (process.env.TIKTOK_USERNAME) {
     try { await tiktok.connect(process.env.TIKTOK_USERNAME, process.env.SESSION_ID || null); }
