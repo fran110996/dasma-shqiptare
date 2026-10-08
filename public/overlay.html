@@ -65,8 +65,10 @@
   #ticker .av.emoji { display: grid; place-items: center; font-size: 30px; background: transparent; border: none; }
   #ticker .name { color: var(--red); }
   #ticker .txt { overflow: hidden; text-overflow: ellipsis; }
-  #ticker.swap { animation: tickerIn .45s cubic-bezier(.2,1.6,.4,1); }
-  @keyframes tickerIn { from { transform: translateX(-50%) scale(.6); opacity: 0; } to { transform: translateX(-50%) scale(1); opacity: 1; } }
+  /* soft fade + small rise (no scaling: scaled text looks shaky at small sizes) */
+  #ticker .txt, #ticker .av { transition: none; }
+  #ticker.swap .txt, #ticker.swap .av { animation: tickerIn .4s ease-out; }
+  @keyframes tickerIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
   /* ---------- Gift legend ---------- */
   #legend { left: 16px; top: 366px; width: 1048px; display: flex; gap: 6px; }
