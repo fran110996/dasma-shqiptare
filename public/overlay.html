@@ -114,7 +114,7 @@
     left: 22px; top: 498px; width: 384px; height: 322px; border-radius: 22px;
     background: var(--panel); border: 3px solid var(--gold-deep);
     box-shadow: inset 0 0 0 2px rgba(255,220,120,.15), 0 10px 24px rgba(0,0,0,.5);
-    padding: 10px 12px; backdrop-filter: blur(2px);
+    padding: 10px 12px;
   }
   #board h2 {
     font-family: 'Lilita One', sans-serif; font-weight: 400; font-size: 31px; letter-spacing: 1px;
@@ -133,11 +133,17 @@
   .row .cs { color: var(--gold); display: flex; align-items: center; gap: 5px; }
   .row.first {
     height: 56px; background: linear-gradient(90deg, #f6c544, #ffe58a 50%, #d9a224);
-    box-shadow: 0 0 22px rgba(255,200,60,.55); animation: kumbariGlow 2s ease-in-out infinite;
+    box-shadow: 0 0 22px rgba(255,200,60,.55);
   }
   .row.first .nm, .row.first .cs, .row.first .rk { color: var(--ink); }
   .row.first img { width: 44px; height: 44px; border-color: var(--red); }
-  @keyframes kumbariGlow { 50% { box-shadow: 0 0 34px rgba(255,220,90,.9); } }
+  /* glow pulse via opacity only (cheap: no repaint every frame) */
+  .row.first::after {
+    content: ''; position: absolute; inset: 0; border-radius: 14px; pointer-events: none;
+    box-shadow: 0 0 34px rgba(255,220,90,.9); opacity: 0; will-change: opacity;
+    animation: kumbariGlow 2s ease-in-out infinite;
+  }
+  @keyframes kumbariGlow { 50% { opacity: 1; } }
   .row.bump .cs { animation: bump .5s; }
   @keyframes bump { 40% { transform: scale(1.35); } }
   #board .empty { text-align: center; color: #d8b98f; font-size: 22px; padding-top: 70px; opacity: .8; }
@@ -193,9 +199,9 @@
   }
   #np.on { display: flex; }
   #np .eq { display: flex; gap: 3px; align-items: flex-end; height: 24px; }
-  #np .eq i { width: 5px; background: var(--gold); border-radius: 2px; animation: eq .6s ease-in-out infinite alternate; }
+  #np .eq i { width: 5px; height: 24px; background: var(--gold); border-radius: 2px; transform-origin: bottom; will-change: transform; animation: eq .6s ease-in-out infinite alternate; }
   #np .eq i:nth-child(2) { animation-delay: -.2s; } #np .eq i:nth-child(3) { animation-delay: -.4s; } #np .eq i:nth-child(4) { animation-delay: -.1s; }
-  @keyframes eq { from { height: 4px; } to { height: 24px; } }
+  @keyframes eq { from { transform: scaleY(.17); } to { transform: scaleY(1); } }
 
   /* ---------- Big alert ---------- */
   #alert {

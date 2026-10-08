@@ -726,6 +726,7 @@ const Scene = (() => {
   // Particles (fx canvas)
   // -----------------------------------------------------------
   const particles = [];
+  let fxDirty = true;
   const billSprites = [];
   (() => {
     const cols = [['#5fae5a', '#2f6e2c'], ['#4f8fd6', '#24518a'], ['#b06ad6', '#6a2d8f'], ['#f0a240', '#a8601a'], ['#e86b8a', '#9c2c4a'], ['#9aa3ad', '#5c646d'], ['#e4c94a', '#9a8318']];
@@ -817,6 +818,9 @@ const Scene = (() => {
 
   function updateParticles(dt, t) {
     const k = dt * 60;
+    // nothing to draw on the fx layer: skip clearing it so the browser doesn't repaint a full-screen layer
+    if (!particles.length) { if (fxDirty) { fx.clearRect(0, 0, W, H); fxDirty = false; } return; }
+    fxDirty = true;
     fx.clearRect(0, 0, W, H);
     for (let i = particles.length - 1; i >= 0; i--) {
       const p = particles[i];
@@ -891,11 +895,16 @@ const Scene = (() => {
   // Main render
   // -----------------------------------------------------------
   let last = performance.now();
+  // TikTok LIVE streams at 30 fps, so drawing more frames only costs CPU on the streaming PC.
+  // Override with ?fps=60 in the overlay URL.
+  const MAX_FPS = Number(new URLSearchParams(location.search).get('fps')) || 30;
+  const FRAME_MS = 1000 / MAX_FPS;
   const startT = performance.now();
   let lastNote = 0, lastHeart = 0, lastConf = 0;
 
   function frame(now) {
-    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    if (now - last < FRAME_MS - 2) { requestAnimationFrame(frame); return; }
+    const dt = Math.min(0.1, (now - last) / 1000); last = now;
     const t = (now - startT) / 1000;
     const bpm = party ? 150 : 118;
     const beat = t * bpm / 60;
