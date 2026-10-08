@@ -4,21 +4,29 @@
 // =============================================================
 
 module.exports = {
-  // Gift → role mapping. `gift` is matched against the TikTok gift name.
-  // Unknown gifts fall back to the highest tier whose `coins` <= gift value.
+  // Gift → role mapping (client's list, 08 Oct).
+  // A gift matches a tier by name (`gift` or any `aliases`), then by exact coin
+  // value (±1), and otherwise falls back to the highest tier whose coins <= value.
+  // Check the server logs during a LIVE: every gift is printed with its real name and coins.
   gifts: [
-    { key: 'tupan',    gift: 'Rose',                coins: 1,    label: 'Tupan',            icon: '🌹', role: 'drummer' },
-    { key: 'valle',    gift: 'Friendship Necklace', coins: 10,   label: 'Hyr në valle',     icon: '📿', role: 'dancer' },
-    { key: 'shok',     gift: 'Hat and Mustache',    coins: 99,   label: 'Shok i dhëndrrit', icon: '🥸', role: 'bestman' },
-    { key: 'bakshish', gift: 'Hand Heart',          coins: 100,  label: 'Bakshish',         icon: '🫶', role: 'money' },
-    { key: 'nusja',    gift: 'Money Gun',           coins: 500,  label: 'Nusja',            icon: '💸', role: 'bride' },
-    { key: 'dhendri',  gift: 'Galaxy',              coins: 1000, label: 'Dhëndri',          icon: '🌌', role: 'groom' },
+    { key: 'tupan',    gift: 'Rose',        aliases: ['Flower'],               coins: 1,   label: 'Tupan',             icon: '🌹', role: 'drummer' },
+    { key: 'valle',    gift: 'Rosa',        aliases: [],                       coins: 10,  label: 'Futesh në valle',   icon: '💐', role: 'dancer' },
+    { key: 'shoqja',   gift: 'Paper Crane', aliases: [],                       coins: 99,  label: 'Shoqja e nuses',    icon: '🕊️', role: 'bridesmaid' },
+    { key: 'bakshish', gift: 'Confetti',    aliases: [],                       coins: 100, label: 'Bakshish',          icon: '🎉', role: 'money' },
+    { key: 'shok',     gift: 'Hearts',      aliases: [],                       coins: 199, label: 'Shoku i dhëndrrit', icon: '💕', role: 'bestman' },
+    { key: 'dolli',    gift: 'Semsemia',    aliases: ['Sem Sem', 'Semsem'],    coins: 200, label: 'Dolli për çiftin',  icon: '🥂', role: 'toast' },
+    { key: 'nusja',    gift: 'Pink Cowboy', aliases: ['Cowboy'],               coins: 450, label: 'Nusja',             icon: '🤠', role: 'bride' },
+    { key: 'dhendri',  gift: 'Train',       aliases: [],                       coins: 899, label: 'Dhëndri',           icon: '🚂', role: 'groom' },
   ],
 
   // Any gift worth at least this many coins also puts the sender in the dance
   joinDanceMinCoins: 10,
   maxDancers: 16,
   maxBestMen: 2,
+  maxBridesmaids: 2,
+
+  // Toast (everyone raises a glass) duration
+  toastSeconds: 8,
 
   // Each Rose keeps the drum playing this many seconds (stacking, capped)
   drumSecondsPerRose: 4,
@@ -43,7 +51,7 @@ module.exports = {
     welcome: 'Mirë se erdhe në dasmë, {name}!',
     share: '{name} ftoi miqtë në dasmë!',
     follow: '{name} u bë mik i dasmës!',
-    joinedDance: '{name} hyri në valle!',
+    joinedDance: '{name} u fut në valle!',
     bakshish: '{name} hodhi bakshish!',
     drummer: '{name} i bie tupanit!',
     leaderboardTitle: 'BUJARËT E DASMËS',
@@ -55,7 +63,11 @@ module.exports = {
     party: 'QEJF I MADH!',
     newBride: 'NUSJA E RE!',
     newGroom: 'DHËNDRI I RI!',
-    newBestman: 'SHOK I DHËNDRRIT!',
+    newBestman: 'SHOKU I DHËNDRRIT!',
+    newBridesmaid: 'SHOQJA E NUSES!',
+    toast: 'DOLLI PËR ÇIFTIN!',
+    toastSub: 'Gëzuar! 🥂',
+    cheers: 'Gëzuar! 🥂',
     newDrummer: 'TUPANXHIU!',
     couple: 'U trashëgofshin! 💍',
     jumpHint: 'Shkruaj HOP në chat për të kërcyer!',

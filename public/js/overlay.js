@@ -264,6 +264,12 @@
           },
         });
         break;
+      case 'toast':
+        queueAlert({
+          title: ev.title, user: u, sub: ev.sub, duration: 2600,
+          onShow() { Sfx.chime(); Sfx.applause(2.2); Scene.toast(ev.seconds, ev.cheers); Scene.confetti(70); },
+        });
+        break;
       case 'cake':
         queueAlert({
           title: ev.title, icon: '🎂', sub: `🎂 Nr. ${ev.level}`, duration: 3400,

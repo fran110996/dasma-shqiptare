@@ -18,7 +18,8 @@ const Scene = (() => {
   const POS = {
     groom: { x: 512, y: 1004, s: 1.12 },
     bride: { x: 610, y: 1004, s: 1.12 },
-    bestman: [{ x: 402, y: 984, s: 0.98 }, { x: 720, y: 984, s: 0.98 }],
+    bestman: [{ x: 428, y: 990, s: 0.97 }, { x: 348, y: 976, s: 0.93 }],      // groom's side
+    bridesmaid: [{ x: 694, y: 990, s: 0.97 }, { x: 774, y: 976, s: 0.93 }],   // bride's side
     drummer: { x: 992, y: 1120, s: 0.86 },
     flag: { x: 424, y: 618, w: 270, h: 168 },
   };
@@ -346,6 +347,7 @@ const Scene = (() => {
     groom:  { suit: '#141418', suit2: '#2b2b33', shirt: '#ffffff', tie: '#e41e20', shoe: '#0c0c0c', skin: '#efc6a0' },
     bride:  { dress: '#ffffff', dress2: '#efe4ee', trim: '#f1c24a', skin: '#efc6a0' },
     bestman:{ suit: '#1d2542', suit2: '#33406b', shirt: '#ffffff', tie: '#e41e20', shoe: '#0c0c0c', skin: '#efc6a0' },
+    bridesmaid: { shirt: '#fff7fa', vest: '#e0457b', trim: '#f1c24a', apron: '#f7b3cc', skirt: '#ffe3ee', skirt2: '#f5b5cd', shoe: '#c2185b', skin: '#efc6a0' },
   };
   const GHOST_COLOR = 'rgba(255,236,210,0.95)';
   function ghostPal(p) { const g = {}; for (const k in p) g[k] = GHOST_COLOR; return g; }
@@ -485,6 +487,7 @@ const Scene = (() => {
     for (const h of pose.hands) {
       const sx = h.x < 0 ? -16 : 16;
       limb(c, sx, shoulderY + 4, h.x, h.y, width, color, h.bend ?? 8);
+      if (h.glass) drawGlass(c, h.x, h.y, h.glass);
       c.fillStyle = p.skin; c.beginPath(); c.arc(h.x, h.y, 5, 0, TAU); c.fill();
       if (h.hanky) {
         c.fillStyle = '#e41e20';
@@ -494,6 +497,34 @@ const Scene = (() => {
       }
       if (h.bouquet) drawBouquet(c, h.x, h.y - 4);
     }
+  }
+
+  // champagne flute held by the stem at (x, y)
+  function drawGlass(c, x, y, a) {
+    c.save();
+    c.globalAlpha *= Math.min(1, a * 1.6);
+    c.translate(x, y); c.scale(1.6, 1.6); x = 0; y = 0;
+    c.shadowColor = 'rgba(255,220,120,.8)'; c.shadowBlur = 6;
+    c.strokeStyle = 'rgba(255,255,255,.95)'; c.lineWidth = 2;
+    c.beginPath(); c.moveTo(x, y + 6); c.lineTo(x, y - 12); c.stroke();
+    c.beginPath(); c.ellipse(x, y + 6, 5, 1.6, 0, 0, TAU); c.stroke();
+    c.beginPath(); c.moveTo(x - 6.2, y - 32); c.lineTo(x - 4, y - 12); c.lineTo(x + 4, y - 12); c.lineTo(x + 6.2, y - 32); c.closePath();
+    const g = c.createLinearGradient(0, y - 32, 0, y - 12);
+    g.addColorStop(0, '#fff3c4'); g.addColorStop(1, '#f0b429');
+    c.fillStyle = g; c.fill();
+    c.beginPath(); c.moveTo(x - 7, y - 40); c.lineTo(x - 4, y - 12); c.lineTo(x + 4, y - 12); c.lineTo(x + 7, y - 40);
+    c.lineWidth = 1.6; c.stroke();
+    c.fillStyle = 'rgba(255,255,255,.9)';
+    for (const [bx, by] of [[-1.5, -17], [1.8, -22], [-0.5, -27]]) { c.beginPath(); c.arc(x + bx, y + by, 1, 0, TAU); c.fill(); }
+    c.restore();
+  }
+
+  function drawFlowerCrown(c, y) {
+    const cols = ['#ff7eb0', '#ffffff', '#ffd166', '#ff7eb0', '#ffffff', '#ffd166', '#ff7eb0'];
+    cols.forEach((col, i) => {
+      const a = Math.PI + (i + 0.5) * Math.PI / cols.length;
+      c.fillStyle = col; c.beginPath(); c.arc(Math.cos(a) * 24, y + 22 + Math.sin(a) * 24, 4.2, 0, TAU); c.fill();
+    });
   }
 
   function drawQeleshe(c, y, ghost) {
@@ -588,6 +619,38 @@ const Scene = (() => {
   let party = false;
   let drumUntil = 0;
   let coupleSince = 0;
+  let toastStart = 0, toastEnd = 0, lastClinkCycle = -1;
+  const CLINK_PERIOD = 1.8;
+
+  function startToast(seconds) {
+    const now = performance.now();
+    if (now > toastEnd) { toastStart = now; lastClinkCycle = -1; }
+    toastEnd = Math.max(toastEnd, now) + seconds * 1000;
+  }
+  function toastK(now) {
+    if (!toastEnd) return 0;
+    if (now < toastEnd) return clamp((now - toastStart) / 450, 0, 1);
+    return clamp(1 - (now - toastEnd) / 450, 0, 1);
+  }
+  // Raise the glass with the hand facing the couple, clink every CLINK_PERIOD seconds
+  function raiseGlass(it, k, el, clinkNow) {
+    const e = it.e, pose = it.pose;
+    const side = e.kind === 'groom' ? 1 : e.kind === 'bride' ? -1 : (Math.sign(STAGE.cx - e.x) || 1);
+    const pulse = Math.pow(Math.max(0, Math.sin(((el - 0.45) / CLINK_PERIOD + 0.25) * TAU)), 6);
+    const raised = { x: side * (42 + pulse * 10), y: -150 + pulse * 6 + pose.bob, bend: 8 };
+    const rest = { x: -side * 22, y: -92 + pose.bob, bend: 4 };
+    while (pose.hands.length < 2) pose.hands.push({ x: pose.hands.length ? 22 : -22, y: -90, bend: 4 });
+    let raisedOne = false;
+    pose.hands = pose.hands.map(h => {
+      const up = !raisedOne && (Math.sign(h.x) || 1) === side;
+      if (up) raisedOne = true;
+      if (!up && h.bouquet) return h;
+      const tg = up ? raised : rest;
+      return { x: h.x + (tg.x - h.x) * k, y: h.y + (tg.y - h.y) * k, bend: tg.bend, glass: up ? k : 0, hanky: k < 0.5 ? h.hanky : 0 };
+    });
+    if (!raisedOne) pose.hands[0] = { ...raised, glass: k };
+    if (clinkNow && Math.random() < 0.6) sparks(e.x + side * 26 * e.s, e.y - 220 * e.s, 6, ['#fff3c4', '#fff']);
+  }
 
   function want(key, kind, user, extra) {
     let e = ents.get(key);
@@ -610,6 +673,10 @@ const Scene = (() => {
     if (s.groom) keep.add(want('groom:' + s.groom.id, 'groom', s.groom, {}).key);
     if (s.bride) keep.add(want('bride:' + s.bride.id, 'bride', s.bride, {}).key);
     s.bestMen.forEach((u, i) => { if (u) keep.add(want('bm:' + u.id, 'bestman', u, { slot: i }).key); });
+    (s.bridesmaids || []).forEach((u, i) => { if (u) keep.add(want('bs:' + u.id, 'bridesmaid', u, { slot: i }).key); });
+    // pick up a toast already running (e.g. the overlay was reloaded mid-toast)
+    const toastLeft = (s.toastUntil || 0) - s.now;
+    if (toastLeft > 500 && performance.now() > toastEnd) startToast(toastLeft / 1000);
     if (s.drummer) keep.add(want('drum:' + s.drummer.id, 'drummer', s.drummer, {}).key);
     for (const e of ents.values()) if (!keep.has(e.key) && !e.leaving) e.leaving = performance.now();
     const coupled = !!(s.bride && s.groom);
@@ -898,16 +965,18 @@ const Scene = (() => {
       if (e) { e.x = P.x + sway; e.y = P.y; e.s = P.s; items.push({ e, pose }); }
       else items.push({ ghost: role, x: P.x, y: P.y, s: P.s, pose });
     }
-    // ---- best men ----
-    const bms = [...ents.values()].filter(e => e.kind === 'bestman');
-    for (let i = 0; i < 2; i++) {
-      const P = POS.bestman[i];
-      const e = bms.find(x => !x.leaving && x.slot === i) || bms.find(x => x.leaving && x.slot === i);
-      const clap = Math.abs(Math.sin(beat * Math.PI));
-      const pose = { bob: -clap * 2, sway: 0, lf: { x: -9, y: 0 }, rf: { x: 9, y: 0 },
-        hands: [{ x: -4 - clap * 10, y: -104, bend: 10 }, { x: 4 + clap * 10, y: -104, bend: 10 }] };
-      if (e) { e.x = P.x; e.y = P.y; e.s = P.s; items.push({ e, pose }); }
-      else items.push({ ghost: 'bestman', x: P.x, y: P.y, s: P.s, pose });
+    // ---- best men (groom's side) & bridesmaids (bride's side) ----
+    for (const role of ['bestman', 'bridesmaid']) {
+      const list = [...ents.values()].filter(e => e.kind === role);
+      for (let i = 0; i < 2; i++) {
+        const P = POS[role][i];
+        const e = list.find(x => !x.leaving && x.slot === i) || list.find(x => x.leaving && x.slot === i);
+        const clap = Math.abs(Math.sin(beat * Math.PI));
+        const pose = { bob: -clap * 2, sway: 0, lf: { x: -9, y: 0 }, rf: { x: 9, y: 0 },
+          hands: [{ x: -4 - clap * 10, y: -104, bend: 10 }, { x: 4 + clap * 10, y: -104, bend: 10 }] };
+        if (e) { e.x = P.x; e.y = P.y; e.s = P.s; items.push({ e, pose }); }
+        else items.push({ ghost: role, x: P.x, y: P.y, s: P.s, pose });
+      }
     }
     // ---- drummer ----
     {
@@ -929,6 +998,16 @@ const Scene = (() => {
       else items.push({ ghost: 'drummer', x: P.x, y: P.y, s: P.s, pose, hit: 0 });
     }
 
+    // toast: everyone (except the busy drummer) raises a glass
+    const tk = toastK(now);
+    if (tk > 0) {
+      const el = (now - toastStart) / 1000;
+      const cycle = Math.floor((el - 0.45) / CLINK_PERIOD);
+      const clinkNow = el > 0.45 && cycle !== lastClinkCycle && now < toastEnd;
+      if (clinkNow) { lastClinkCycle = cycle; Sfx.clink(); }
+      for (const it of items) if (!it.ghost && it.e.kind !== 'drummer') raiseGlass(it, tk, el, clinkNow);
+    }
+
     // hearts for the happy couple
     if (coupleSince && now - lastHeart > 900) { lastHeart = now; hearts(561, 830, 2, 16); }
     if (party && now - lastConf > 300) { lastConf = now; confetti(6); }
@@ -944,7 +1023,7 @@ const Scene = (() => {
     requestAnimationFrame(frame);
   }
 
-  const GHOST_INFO = { bride: 'nusja', groom: 'dhendri', bestman: 'shok', drummer: 'tupan' };
+  const GHOST_INFO = { bride: 'nusja', groom: 'dhendri', bestman: 'shok', bridesmaid: 'shoqja', drummer: 'tupan' };
 
   function drawItem(c, it, now, t) {
     const ghost = !!it.ghost;
@@ -981,6 +1060,7 @@ const Scene = (() => {
     } else if (kind === 'groom') drawSuit(c, ghost ? ghostPal(PAL.groom) : PAL.groom, pose);
     else if (kind === 'bride') drawBride(c, ghost ? ghostPal(PAL.bride) : PAL.bride, pose, ghost);
     else if (kind === 'bestman') drawSuit(c, ghost ? ghostPal(PAL.bestman) : PAL.bestman, pose);
+    else if (kind === 'bridesmaid') drawWoman(c, ghost ? ghostPal(PAL.bridesmaid) : PAL.bridesmaid, pose);
     else if (kind === 'drummer') {
       const pal = ghost ? ghostPal(PAL.man) : PAL.man;
       drawMan(c, pal, pose, { drum: ghost ? null : () => drawDrum(c, pose, it.hit) });
@@ -1007,13 +1087,14 @@ const Scene = (() => {
     }
 
     const isKumbari = state && e.user.id === state.kumbari;
-    const ring = kind === 'bride' ? '#ffd1e3' : kind === 'groom' ? '#f6c544' : isKumbari ? '#f6c544' : kind === 'bestman' ? '#7bd5ff' : '#ffffff';
+    const ring = kind === 'bride' ? '#ffd1e3' : kind === 'groom' ? '#f6c544' : isKumbari ? '#f6c544' : kind === 'bestman' ? '#7bd5ff' : kind === 'bridesmaid' ? '#ff9cc8' : '#ffffff';
     drawHead(c, e.user, 0, headY, R, ring);
     if (kind === 'dancer' && !e.gender) drawQeleshe(c, headY - R + 5, false);
     if (kind === 'dancer' && e.gender) drawCoinBand(c, headY - R - 2, R);
     if (kind === 'drummer') drawQeleshe(c, headY - R + 5, false);
     if (kind === 'bestman') { drawQeleshe(c, headY - R + 5, false); drawMustache(c, headY + R * 0.2, R); }
     if (kind === 'bride') drawTiara(c, headY - R + 3);
+    if (kind === 'bridesmaid') drawFlowerCrown(c, headY - R + 2);
 
     topY = headY - R - (kind === 'bride' ? 14 : 10);
     topY = nameTag(c, e.user.name, topY, 1, isKumbari) - 4;
@@ -1056,5 +1137,12 @@ const Scene = (() => {
     sparkleUser(userId) { for (const e of entsOf(userId)) sparks(e.x, e.y - 160 * e.s, 30); },
     clearPile() { pileCanvas.getContext('2d').clearRect(0, 0, W, 300); heights.fill(0); },
     isParty: () => party,
+    toast(seconds, text) {
+      startToast(seconds);
+      const people = [...ents.values()].filter(e => !e.leaving && e.kind !== 'drummer');
+      people.sort(() => Math.random() - 0.5).slice(0, 6).forEach((e, i) => {
+        setTimeout(() => { e.bubble = { text, t: performance.now() }; }, 400 + i * 450);
+      });
+    },
   };
 })();

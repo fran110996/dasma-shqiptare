@@ -5,11 +5,13 @@ Viewers send gifts during your TikTok LIVE and join an Albanian wedding on scree
 | Gift | Coins | What happens |
 |---|---|---|
 | 🌹 Rose | 1 | **Tupan**: you play the drum (live 7/8 drum beat, +4s per rose) |
-| 📿 Friendship Necklace | 10 | **Hyr në valle**: you join the circle dance |
-| 🥸 Hat and Mustache | 99 | **Shok i dhëndrrit**: groom's best man (with hat & mustache) |
-| 🫶 Hand Heart | 100 | **Bakshish**: money rain that piles up on the floor |
-| 💸 Money Gun | 500 | **Nusja**: you become the bride |
-| 🌌 Galaxy | 1000 | **Dhëndri**: you become the groom |
+| 💐 Rosa | 10 | **Futesh në valle**: you join the circle dance |
+| 🕊️ Paper Crane | 99 | **Shoqja e nuses**: bride's friend (bride's side) |
+| 🎉 Confetti | 100 | **Bakshish**: money rain that piles up on the floor |
+| 💕 Hearts | 199 | **Shoku i dhëndrrit**: groom's best man (with hat & mustache) |
+| 🥂 Semsemia | 200 | **Dolli për çiftin**: everyone raises a glass and toasts the couple |
+| 🤠 Pink Cowboy | 450 | **Nusja**: you become the bride |
+| 🚂 Train | 899 | **Dhëndri**: you become the groom |
 
 Also:
 - **Bujarët e dasmës** leaderboard. The #1 gifter is the **KUMBARI** 👑 and leads the dance.
@@ -18,7 +20,7 @@ Also:
 - Viewers on screen get chat bubbles. Typing **HOP** makes their character jump.
 - Welcome messages for new viewers, plus shares and follows.
 
-Any other gift counts too: it maps to the closest tier by coin value. Gifts, texts and goals are all editable in `server/config.js`.
+Gifts are matched by name, then by coin value. Any other gift maps to the closest lower tier. The server logs print every gift's real name and coins, so names can be fixed in `server/config.js` if needed. Gifts, texts and goals are all editable in `server/config.js`.
 
 ## Run
 
@@ -51,7 +53,7 @@ The drum and all sound effects are synthesized, so no audio files are needed.
 ## Testing without being live
 
 The control panel has test buttons for every gift, likes, joins, shares and chat, plus:
-- **🎬 Showcase (45s)**: a scripted sequence of every feature, good for recording a demo.
+- **🎬 Showcase (55s)**: a scripted sequence of every feature, good for recording a demo.
 - **▶ Auto demo**: random viewers and gifts running continuously.
 
 ## Deploy on Render

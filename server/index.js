@@ -115,12 +115,14 @@ app.post('/api/disconnect', async (req, res) => {
 
 app.post('/api/sim/start', (req, res) => {
   sim.start(Number(req.body?.speed) || 1);
+  game.log(`🎭 Auto demo started (speed ${sim.speed})`);
   pushStatus();
   res.json({ ok: true });
 });
 
 app.post('/api/sim/stop', (req, res) => {
   sim.stop();
+  game.log('🎭 Simulation stopped');
   pushStatus();
   res.json({ ok: true });
 });
@@ -128,6 +130,7 @@ app.post('/api/sim/stop', (req, res) => {
 app.post('/api/sim/showcase', (req, res) => {
   game.reset();
   const ms = sim.showcase();
+  game.log(`🎬 Showcase started (${ms / 1000}s)`);
   pushStatus();
   setTimeout(pushStatus, ms + 100);
   res.json({ ok: true, ms });

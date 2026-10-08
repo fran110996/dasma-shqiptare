@@ -129,6 +129,15 @@ const Sfx = (() => {
       [523.25, 659.25, 783.99, 1046.5].forEach(f => brass(t + 0.38, f, 0.9, 0.11));
       dum(t + 0.38, 1);
     },
+    // glasses clinking: a few quick bright "tings"
+    clink() {
+      if (!ready()) return;
+      const t = ctx.currentTime;
+      for (const [dt, base] of [[0, 2960], [0.05, 3340], [0.11, 2790]]) {
+        tone(t + dt, base, 0.7, 'sine', 0.09);
+        tone(t + dt, base * 2.71, 0.35, 'sine', 0.03);
+      }
+    },
     chime() {
       if (!ready()) return;
       const t = ctx.currentTime;

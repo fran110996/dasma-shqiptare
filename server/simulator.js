@@ -73,8 +73,8 @@ class Simulator extends EventEmitter {
     else {
       // Weighted gifts: cheap ones are much more common
       const g = Math.random();
-      const key = g < 0.40 ? 'tupan' : g < 0.72 ? 'valle' : g < 0.82 ? 'bakshish'
-        : g < 0.90 ? 'shok' : g < 0.96 ? 'nusja' : 'dhendri';
+      const key = g < 0.38 ? 'tupan' : g < 0.68 ? 'valle' : g < 0.76 ? 'bakshish' : g < 0.82 ? 'shoqja'
+        : g < 0.88 ? 'shok' : g < 0.92 ? 'dolli' : g < 0.97 ? 'nusja' : 'dhendri';
       this.gift(key, key === 'tupan' ? 1 + Math.floor(Math.random() * 5) : 1);
     }
   }
@@ -92,7 +92,7 @@ class Simulator extends EventEmitter {
     this.emit('like', { ...this.user(), likeCount: count || 5 + Math.floor(Math.random() * 25) });
   }
 
-  // Scripted ~45s sequence that shows every feature (great for demo videos)
+  // Scripted ~55s sequence that shows every feature (great for demo videos)
   showcase() {
     this.stop();
     const g = (key, user, count = 1) => () => this.gift(key, count, user);
@@ -105,7 +105,7 @@ class Simulator extends EventEmitter {
       [8600, c('HOP 🕺', 8)], [9000, c('hopaaa', 10)], [9400, c('Opa opa!', 14)],
       [10500, g('bakshish', 4, 2)],
       [13500, g('shok', 20)],
-      [16500, g('shok', 5)],
+      [16500, g('shoqja', 13)],
       [19500, g('nusja', 1)],
       [21500, () => this.share()], [22000, c('U trashëgofshin! ❤️', 9)],
       [23500, g('dhendri', 0)],
@@ -113,13 +113,16 @@ class Simulator extends EventEmitter {
       [29400, () => this.follow()], [30000, c('HOP', 18)], [30300, c('hop hop', 19)],
       [31000, g('tupan', 3, 10)],
       [32500, g('bakshish', 4, 3)],
-      [36000, g('nusja', 1, 3)],
-      [40000, c('Gëzuar! 🔥', 12)], [40500, c('HOP', 23)], [41000, g('valle', 26)],
+      [34500, g('shok', 5)],
+      [37000, g('shoqja', 15)],
+      [40000, g('nusja', 1, 3)],
+      [44000, g('dolli', 12)],
+      [53000, c('Gëzuar! 🔥', 23)], [53500, c('HOP', 18)],
     ];
     this.start(1.4, true); // ambient chat & likes (start() clears timers, so it goes first)
     this.showTimers = steps.map(([t, fn]) => setTimeout(fn, t));
-    this.showTimers.push(setTimeout(() => this.stop(), 46000));
-    return 46000;
+    this.showTimers.push(setTimeout(() => this.stop(), 56000));
+    return 56000;
   }
 
   join() { this.emit('join', this.user()); }

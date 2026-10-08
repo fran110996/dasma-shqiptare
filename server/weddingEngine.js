@@ -33,6 +33,8 @@ class WeddingEngine {
     this.bride = null;
     this.groom = null;
     this.bestMen = [];
+    this.bridesmaids = [];
+    this.toastUntil = 0;
     this.drummer = null;         // userId
     this.drumUntil = 0;
     this.cake = { coins: 0, goal: config.cakeGoal, level: 1 };
@@ -108,19 +110,22 @@ class WeddingEngine {
   }
 
   tierFor(giftName, coins) {
-    const byName = config.gifts.find(g => g.gift.toLowerCase() === String(giftName).toLowerCase());
+    const name = String(giftName).toLowerCase().trim();
+    const byName = config.gifts.find(g => [g.gift, ...(g.aliases || [])].some(n => n.toLowerCase() === name));
     if (byName) return byName;
+    const byCoins = config.gifts.find(g => Math.abs(g.coins - coins) <= 1);
+    if (byCoins) return byCoins;
     const sorted = [...config.gifts].sort((a, b) => b.coins - a.coins);
     return sorted.find(g => coins >= g.coins) || config.gifts[0];
   }
 
   isInScene(userId) {
     return this.dancers.includes(userId) || this.bride === userId || this.groom === userId
-      || this.bestMen.includes(userId) || this.drummer === userId;
+      || this.bestMen.includes(userId) || this.bridesmaids.includes(userId) || this.drummer === userId;
   }
 
   addDancer(userId) {
-    if (this.bride === userId || this.groom === userId || this.bestMen.includes(userId)) return false;
+    if (this.bride === userId || this.groom === userId || this.bestMen.includes(userId) || this.bridesmaids.includes(userId)) return false;
     if (this.dancers.includes(userId)) return false;
     if (this.dancers.length >= config.maxDancers) {
       // Make room: drop the least generous dancer (never the newcomer)
@@ -138,6 +143,7 @@ class WeddingEngine {
   clearRoles(userId) {
     this.dancers = this.dancers.filter(id => id !== userId);
     this.bestMen = this.bestMen.filter(id => id !== userId);
+    this.bridesmaids = this.bridesmaids.filter(id => id !== userId);
     if (this.bride === userId) this.bride = null;
     if (this.groom === userId) this.groom = null;
   }
@@ -239,17 +245,27 @@ class WeddingEngine {
         this.fx('dancer', { user: user(), added, count, text: fmt(config.texts.joinedDance, { name: u.nickname }) });
         break;
       }
-      case 'bestman': {
-        const again = this.bestMen.includes(u.userId);
+      case 'bestman':
+      case 'bridesmaid': {
+        const isMan = tier.role === 'bestman';
+        const list = isMan ? this.bestMen : this.bridesmaids;
+        const again = list.includes(u.userId);
         if (!again) {
           this.clearRoles(u.userId);
-          this.bestMen.push(u.userId);
-          if (this.bestMen.length > config.maxBestMen) {
-            const out = this.bestMen.shift();
-            this.addDancer(out); // demoted best man keeps dancing
+          list.push(u.userId);
+          if (list.length > (isMan ? config.maxBestMen : config.maxBridesmaids)) {
+            const out = list.shift();
+            this.addDancer(out); // the replaced one keeps dancing
           }
         }
-        this.fx('role', { role: 'bestman', user: user(), again, title: config.texts.newBestman });
+        this.fx('role', { role: tier.role, user: user(), again,
+          title: isMan ? config.texts.newBestman : config.texts.newBridesmaid });
+        break;
+      }
+      case 'toast': {
+        this.toastUntil = Math.max(Date.now(), this.toastUntil) + config.toastSeconds * 1000;
+        this.fx('toast', { user: user(), title: config.texts.toast, sub: config.texts.toastSub,
+          seconds: config.toastSeconds, cheers: config.texts.cheers });
         break;
       }
       case 'money': {
@@ -344,6 +360,8 @@ class WeddingEngine {
       bride: get(this.bride),
       groom: get(this.groom),
       bestMen: this.bestMen.map(get),
+      bridesmaids: this.bridesmaids.map(get),
+      toastUntil: this.toastUntil,
       drummer: this.drummer ? { ...get(this.drummer), until: this.drumUntil } : null,
       kumbari,
       leaderboard: this.leaderboard(5).map(u => this.publicUser(u)),

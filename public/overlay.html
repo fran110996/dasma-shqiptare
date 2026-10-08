@@ -69,7 +69,7 @@
   @keyframes tickerIn { from { transform: translateX(-50%) scale(.6); opacity: 0; } to { transform: translateX(-50%) scale(1); opacity: 1; } }
 
   /* ---------- Gift legend ---------- */
-  #legend { left: 22px; top: 368px; width: 1036px; display: flex; gap: 8px; }
+  #legend { left: 16px; top: 366px; width: 1048px; display: flex; gap: 6px; }
   .gcard {
     flex: 1; min-width: 0; height: 118px; border-radius: 18px; padding: 5px 4px 5px;
     background: linear-gradient(180deg, rgba(70,8,12,.92), rgba(25,3,5,.92));
@@ -78,11 +78,11 @@
     display: flex; flex-direction: column; align-items: center; justify-content: space-between;
     position: relative; overflow: hidden;
   }
-  .gcard .gi { width: 46px; height: 46px; flex: none; display: grid; place-items: center; font-size: 40px; line-height: 1; }
-  .gcard .gi img { width: 46px; height: 46px; object-fit: contain; }
-  .gcard .gn { font-size: 14px; font-weight: 700; color: #f1d9b5; line-height: 1.05; text-align: center; max-width: 100%; }
+  .gcard .gi { width: 40px; height: 40px; flex: none; display: grid; place-items: center; font-size: 32px; line-height: 1; }
+  .gcard .gi img { width: 40px; height: 40px; object-fit: contain; }
+  .gcard .gn { font-size: 12.5px; font-weight: 700; color: #f1d9b5; line-height: 1.05; text-align: center; max-width: 100%; }
   .gcard .gn b { color: #fff; white-space: nowrap; }
-  .gcard .gl { font-size: 21px; font-weight: 800; color: var(--gold); line-height: 1.05; text-align: center; white-space: nowrap; text-shadow: 0 2px 0 #000; }
+  .gcard .gl { font-size: 18px; font-weight: 800; color: var(--gold); line-height: 1; text-align: center; text-shadow: 0 2px 0 #000; min-height: 2em; display: flex; align-items: center; }
   .gcard.hit { animation: cardHit .7s ease-out; }
   .gcard.hit::after {
     content: ''; position: absolute; inset: 0; border-radius: 16px;
