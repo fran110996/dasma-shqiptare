@@ -60,9 +60,10 @@ class TikTokConnector extends EventEmitter {
       this.emit('connected', { username: this.creatorUsername, state });
     });
 
-    this.connection.on('disconnected', () => {
-      this.isConnected = false;
-      this.emit('disconnected');
+    const conn = this.connection;
+    conn.on('disconnected', () => {
+      if (this.connection === conn) this.isConnected = false;
+      this.emit('disconnected', { intentional: !!conn.intentionalClose });
     });
 
     // Errors while connecting are reported once by connect() below
@@ -144,6 +145,7 @@ class TikTokConnector extends EventEmitter {
 
   async disconnect() {
     if (this.connection) {
+      this.connection.intentionalClose = true;
       try { this.connection.disconnect(); } catch (_) {}
       this.connection = null;
       this.isConnected = false;

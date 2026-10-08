@@ -80,7 +80,12 @@ function status() {
 const pushStatus = () => io.emit('status', status());
 
 tiktok.on('connected', () => { pushStatus(); game.log(`✅ Connected to @${tiktok.creatorUsername}`); });
-tiktok.on('disconnected', () => { pushStatus(); game.log('⚠️ TikTok disconnected'); });
+tiktok.on('disconnected', ({ intentional } = {}) => {
+  pushStatus();
+  if (intentional) return;
+  game.log('⚠️ TikTok LIVE connection lost');
+  io.emit('panel:error', 'The TikTok LIVE connection was lost. If you are still LIVE, click Connect again.');
+});
 tiktok.on('error', err => game.log(`❌ ${err?.message || err}`));
 
 // -------------------------------------------------------
@@ -103,6 +108,7 @@ app.post('/api/connect', async (req, res) => {
 
 app.post('/api/disconnect', async (req, res) => {
   await tiktok.disconnect();
+  game.log('🔌 Disconnected by the streamer');
   pushStatus();
   res.json({ ok: true });
 });

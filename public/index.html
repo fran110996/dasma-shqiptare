@@ -38,8 +38,6 @@
   .gift button { padding: 6px 10px; font-size: 13px; }
   .quick { display: flex; flex-wrap: wrap; gap: 8px; }
   .url { display: flex; gap: 8px; } .url input { font-family: ui-monospace, monospace; font-size: 14px; }
-  #log { height: 420px; overflow-y: auto; font-size: 14px; line-height: 1.5; font-family: ui-monospace, monospace; color: var(--muted); }
-  #log div { border-bottom: 1px solid #2b0c10; padding: 3px 0; }
   .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; text-align: center; }
   .stats b { display: block; font-size: 26px; color: var(--gold); line-height: 1.1; }
   .stats span { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
@@ -118,10 +116,6 @@
       <h2>Preview</h2>
       <div class="preview"><iframe src="/overlay?sound=0" title="Overlay preview"></iframe></div>
     </section>
-    <section>
-      <h2>Event log</h2>
-      <div id="log"></div>
-    </section>
   </div>
 </main>
 
@@ -170,6 +164,7 @@
     status = s;
     $('liveStatus').textContent = s.connected ? `● LIVE @${s.username}` : '● Not connected';
     $('liveStatus').classList.toggle('on', s.connected);
+    if (s.connected) $('err').textContent = '';
     $('simStatus').hidden = !s.simulating;
     $('obsStatus').textContent = s.overlays ? `📺 Overlay open${s.overlays > 1 ? ' ×' + s.overlays : ''}` : '📺 Overlay: not open';
     $('obsStatus').classList.toggle('on', s.overlays > 0);
@@ -192,12 +187,8 @@
         <div class="btns"><button onclick="post('/api/test',{type:'gift',key:'${g.key}',count:1})">x1</button><button onclick="post('/api/test',{type:'gift',key:'${g.key}',count:5})">x5</button></div>
       </div>`).join('');
   });
-  socket.on('log', l => {
-    const el = document.createElement('div');
-    el.textContent = `${new Date(l.t).toLocaleTimeString()}  ${l.text}`;
-    $('log').prepend(el);
-    while ($('log').children.length > 200) $('log').lastChild.remove();
-  });
+  // Only problems the streamer must act on are shown here; everything else goes to the server logs
+  socket.on('panel:error', msg => { $('err').textContent = msg; });
 </script>
 </body>
 </html>

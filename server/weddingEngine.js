@@ -156,10 +156,9 @@ class WeddingEngine {
     this.io.emit('fx', { type, ...payload });
   }
 
-  // Shown in the control panel AND in the server logs (Render → Logs)
+  // Server logs only (Render → Logs), not shown in the control panel
   log(text) {
     console.log(`[${new Date().toISOString().slice(11, 19)}] ${text}`);
-    this.io.emit('log', { t: Date.now(), text });
   }
 
   // ---------------------------------------------------------
