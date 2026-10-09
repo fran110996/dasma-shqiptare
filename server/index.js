@@ -80,16 +80,64 @@ function status() {
 }
 const pushStatus = () => io.emit('status', status());
 
+// -------------------------------------------------------
+// Auto-reconnect: if TikTok drops the connection (and the streamer didn't
+// press Disconnect), retry every 20s for ~5 minutes.
+// -------------------------------------------------------
+const RECONNECT_MS = Number(process.env.RECONNECT_MS) || 20000;
+const RECONNECT_TRIES = 15;
+let reconnect = null;      // { username, sessionId, attempts, timer }
+let liveConnected = false; // true while we hold a working TikTok connection
+let lastSessionId = null;
+
+function stopReconnect() {
+  if (reconnect) clearTimeout(reconnect.timer);
+  reconnect = null;
+}
+function scheduleReconnect() {
+  if (!reconnect) return;
+  if (reconnect.attempts >= RECONNECT_TRIES) {
+    game.log(`⚠️ Auto-reconnect gave up after ${RECONNECT_TRIES} tries`);
+    io.emit('panel:error', 'Could not reconnect to the TikTok LIVE. If you are still LIVE, click Connect again.');
+    stopReconnect();
+    return;
+  }
+  reconnect.timer = setTimeout(async () => {
+    if (!reconnect || liveConnected) return;
+    reconnect.attempts++;
+    game.log(`🔄 Reconnecting to @${reconnect.username} (try ${reconnect.attempts}/${RECONNECT_TRIES})…`);
+    try {
+      await tiktok.connect(reconnect.username, reconnect.sessionId);
+    } catch (err) {
+      game.log(`❌ Reconnect failed: ${err.message}`);
+      scheduleReconnect();
+    }
+  }, RECONNECT_MS);
+}
+
 tiktok.on('connected', () => {
-  game.resetLikeGoal(); // a new LIVE starts its like count from zero
+  liveConnected = true;
+  // a NEW live starts its like counters from zero; an auto-reconnect keeps them
+  if (reconnect) {
+    game.log(`✅ Reconnected to @${tiktok.creatorUsername}`);
+    io.emit('panel:error', '');
+    stopReconnect();
+    pushStatus();
+    return;
+  }
+  game.resetLikeGoal();
   pushStatus();
   game.log(`✅ Connected to @${tiktok.creatorUsername}`);
 });
 tiktok.on('disconnected', ({ intentional } = {}) => {
   pushStatus();
-  if (intentional) return;
+  if (intentional || !liveConnected) return;
+  liveConnected = false;
   game.log('⚠️ TikTok LIVE connection lost');
-  io.emit('panel:error', 'The TikTok LIVE connection was lost. If you are still LIVE, click Connect again.');
+  if (reconnect) return; // already retrying
+  io.emit('panel:error', 'The TikTok LIVE connection was lost. Reconnecting automatically…');
+  reconnect = { username: tiktok.creatorUsername, sessionId: lastSessionId, attempts: 0, timer: null };
+  scheduleReconnect();
 });
 tiktok.on('error', err => game.log(`❌ ${err?.message || err}`));
 
@@ -100,6 +148,9 @@ app.post('/api/connect', async (req, res) => {
   const { username, sessionId } = req.body || {};
   if (!username) return res.status(400).json({ error: 'username required' });
   game.log(`🔌 Connecting to @${username.replace(/^@/, '')}…`);
+  stopReconnect();
+  liveConnected = false;
+  lastSessionId = sessionId || process.env.SESSION_ID || null;
   try {
     await tiktok.connect(username, sessionId || process.env.SESSION_ID || null);
     pushStatus();
@@ -112,6 +163,8 @@ app.post('/api/connect', async (req, res) => {
 });
 
 app.post('/api/disconnect', async (req, res) => {
+  stopReconnect();
+  liveConnected = false;
   await tiktok.disconnect();
   game.log('🔌 Disconnected by the streamer');
   pushStatus();
