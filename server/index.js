@@ -186,6 +186,7 @@ app.post('/api/music/cmd', (req, res) => {
   const { cmd, url } = req.body || {};
   if (!['next', 'prev', 'toggle', 'play'].includes(cmd)) return res.status(400).json({ error: 'unknown cmd' });
   io.emit('music', { cmd, url });
+  game.log(`🎵 Panel: ${cmd}${url ? ' ' + decodeURIComponent(url.split('/').pop()) : ''}`);
   res.json({ ok: true });
 });
 
@@ -211,6 +212,8 @@ io.on('connection', socket => {
     pushStatus();
   });
   socket.on('music:now', now => {
+    const changed = JSON.stringify(now) !== JSON.stringify(musicNow);
+    if (changed) game.log(now ? `🎵 ${now.paused ? 'Paused' : 'Playing'}: ${now.title}` : '🎵 Music stopped');
     musicNow = now;
     io.emit('music:now', musicNow);
   });
