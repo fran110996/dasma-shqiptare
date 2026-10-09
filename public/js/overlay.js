@@ -65,12 +65,7 @@
     return `<div class="gcard" data-key="${g.key}"><div class="gi">${icon}</div>
       <div class="gt"><div class="gl">${esc(g.label)}</div><div class="gn">${esc(g.gift)}${price}</div></div></div>`;
   }
-  // live progress on the "every 1000 likes" card
-  let likeProgress = null;
-  function paintLikes() {
-    const el = document.querySelector('.gcard[data-key="likes"] .gn');
-    if (el && likeProgress) el.textContent = `❤️ ${likeProgress.value}/${likeProgress.goal}`;
-  }
+  function paintLikes() {}
   function showLegendPage(page, animate = true) {
     const pages = Math.max(1, Math.ceil(legendCards.length / perPage));
     legendPage = ((page % pages) + pages) % pages;
@@ -251,8 +246,7 @@
     $('qejfTitle').textContent = texts.qejf;
     $('cakeTitle').textContent = texts.cake;
     renderLegend(s.config);
-    likeProgress = s.likes || null;
-    paintLikes();
+
     renderBoard(s.leaderboard);
     renderMeters(s);
     Scene.sync(s);

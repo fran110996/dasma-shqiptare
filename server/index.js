@@ -64,7 +64,8 @@ tiktok.on('comment', () => minute.comments++);
 tiktok.on('gift', d => { minute.gifts += d.repeatCount || 1; });
 setInterval(() => {
   if (!tiktok.isConnected) return;
-  game.log(`📊 Last minute: ${minute.joins} joins · ${minute.likes} likes · ${minute.comments} comments · ${minute.gifts} gifts`);
+  const top = game.topLikers(3).map(t => `${t.name} ${t.likes}`).join(', ');
+  game.log(`📊 Last minute: ${minute.joins} joins · ${minute.likes} likes · ${minute.comments} comments · ${minute.gifts} gifts${top ? ` | top likers: ${top}` : ''}`);
   Object.keys(minute).forEach(k => { minute[k] = 0; });
 }, 60000);
 

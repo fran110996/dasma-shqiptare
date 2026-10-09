@@ -122,7 +122,10 @@ class TikTokConnector extends EventEmitter {
 
     // LIKE
     this.connection.on('like', (data) => {
-      this.emit('like', { ...normalizeUser(data.user), likeCount: data.likeCount || 1, totalLikeCount: data.totalLikeCount || 0 });
+      // v2 events use `count` (likes in this event, up to ~15) and `total` (the LIVE's total, as a string)
+      const likeCount = Number(data.count ?? data.likeCount ?? 1) || 1;
+      const totalLikeCount = Number(data.total ?? data.totalLikeCount ?? 0) || 0;
+      this.emit('like', { ...normalizeUser(data.user), likeCount, totalLikeCount });
     });
 
     // SHARE / FOLLOW

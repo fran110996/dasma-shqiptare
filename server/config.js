@@ -19,8 +19,7 @@ module.exports = {
     { key: 'dhendri',  gift: 'Train',       aliases: [],                       coins: 899, label: 'Dhëndri',           icon: '🚂', role: 'groom' },
   ],
 
-  // Every N likes in the whole LIVE, the viewer who liked most since the last goal joins the dance.
-  // (TikTok only sends a sample of each viewer's likes, so per-viewer counting can't reach 1000.)
+  // A viewer who sends this many likes (counted per viewer during the LIVE) joins the dance
   likesToJoin: 1000,
 
   // Gift legend: cards shown at once (it rotates pages so text stays readable on phones)
@@ -45,7 +44,7 @@ module.exports = {
   cakeGoalGrowth: 1.5,
 
   // "Qejfi" party meter (0-100)
-  qejfPerLike: 0.12,
+  qejfPerLike: 0.06,
   qejfPerCoin: 0.035,
   qejfPerChat: 0.4,
   qejfDecayPerSec: 0.35,
@@ -60,8 +59,8 @@ module.exports = {
     share: '{name} ftoi miqtë në dasmë!',
     follow: '{name} u bë mik i dasmës!',
     joinedDance: '{name} u fut në valle!',
-    likesJoined: '{name} u fut në valle! ❤️ 1000 like',
-    likesCard: 'Çdo 1000 like',
+    likesJoined: '{name} u fut në valle me 1000 like!',
+    likesCard: '1000 Like',
     bakshish: '{name} hodhi bakshish!',
     drummer: '{name} i bie tupanit!',
     leaderboardTitle: 'BUJARËT E DASMËS',

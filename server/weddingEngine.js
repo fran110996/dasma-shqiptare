@@ -77,17 +77,14 @@ class WeddingEngine {
     this.broadcast(true);
   }
 
-  // Like goal: counted on the LIVE's total likes (exact), restarted on every new connection
+  // Per-viewer like counters, restarted on every new connection / reset
   resetLikeGoal() {
-    this.roomLikes = 0;
-    this.likeMark = null;        // goals already reached (roomLikes / likesToJoin)
-    this.likeWindow = new Map(); // userId -> likes seen since the last goal
+    this.likesByUser = new Map(); // userId -> likes sent during this LIVE
   }
 
-  likeProgress() {
-    const goal = config.likesToJoin;
-    const done = (this.likeMark || 0) * goal;
-    return { value: Math.max(0, Math.min(goal, this.roomLikes - done)), goal };
+  topLikers(n = 3) {
+    return [...this.likesByUser.entries()].sort((a, b) => b[1] - a[1]).slice(0, n)
+      .map(([id, likes]) => ({ name: this.users.get(id)?.nickname || id, likes }));
   }
 
   // ---------------------------------------------------------
@@ -210,23 +207,18 @@ class WeddingEngine {
     const count = data.likeCount || 1;
     this.stats.likes += count;
     this.addQejf(count * config.qejfPerLike);
-    // Every N likes in the LIVE → the top liker since the last goal joins the dance
+    // Per-viewer like counter: reaching N likes puts this viewer in the dance (once)
     const N = config.likesToJoin;
-    const total = data.totalLikeCount > 0 ? data.totalLikeCount : this.roomLikes + count;
-    if (this.likeMark == null) this.likeMark = Math.floor(total / N); // likes from before we connected don't count
-    this.roomLikes = Math.max(this.roomLikes, total);
-    this.likeWindow.set(u.userId, (this.likeWindow.get(u.userId) || 0) + count);
-    const mark = Math.floor(this.roomLikes / N);
-    if (mark > this.likeMark) {
-      this.likeMark = mark;
-      const ranked = [...this.likeWindow.entries()].sort((a, b) => b[1] - a[1]).map(([id]) => id);
-      const winnerId = ranked.find(id => !this.isInScene(id));
-      this.likeWindow.clear();
-      this.log(`❤️ LIVE reached ${mark * N} likes → ${winnerId ? this.users.get(winnerId).nickname + ' joins the dance' : 'top likers already dancing'}`);
-      if (winnerId) {
-        const w = this.users.get(winnerId);
-        this.addDancer(winnerId);
-        this.fx('dancer', { user: this.publicUser(w), added: true, viaLikes: true, text: fmt(config.texts.likesJoined, { name: w.nickname }) });
+    const before = this.likesByUser.get(u.userId) || 0;
+    const after = before + count;
+    this.likesByUser.set(u.userId, after);
+    if (before < N && after >= N) {
+      if (this.isInScene(u.userId)) {
+        this.log(`❤️ ${u.nickname} reached ${N} likes (already in the wedding)`);
+      } else {
+        this.addDancer(u.userId);
+        this.log(`❤️ ${u.nickname} reached ${N} likes → Futesh në valle`);
+        this.fx('dancer', { user: this.publicUser(u), added: true, viaLikes: true, text: fmt(config.texts.likesJoined, { name: u.nickname }) });
       }
     }
     this.fx('like', { user: this.publicUser(u), count, inScene: this.isInScene(u.userId) });
@@ -404,7 +396,7 @@ class WeddingEngine {
       cake: this.cake,
       qejf: { value: this.qejf, label: config.texts.qejfLevels[qejfLevel], party: Date.now() < this.partyUntil },
       stats: this.stats,
-      likes: this.likeProgress(),
+      topLikers: this.topLikers(),
       now: Date.now(),
     };
   }
