@@ -44,6 +44,15 @@
   .preview { width: 100%; aspect-ratio: 9 / 16; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: #000; }
   .preview iframe { width: 100%; height: 100%; border: 0; }
   small.help { color: var(--muted); display: block; margin-top: 8px; font-size: 13px; }
+  .np-row { display: flex; align-items: center; gap: 12px; margin-top: 14px; flex-wrap: wrap; }
+  .np-now { flex: 1; min-width: 200px; }
+  .np-label { display: block; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+  .np-btns { display: flex; gap: 6px; }
+  .np-btns button { font-size: 20px; padding: 6px 14px; }
+  .songs { margin-top: 10px; max-height: 260px; overflow-y: auto; border: 1px solid var(--line); border-radius: 10px; }
+  .songs div { padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #2b0c10; font-size: 15px; }
+  .songs div:hover { background: #3a1418; }
+  .songs div.on { color: var(--gold); font-weight: 800; }
   .err { color: #ff7b7b; font-weight: 700; margin-top: 8px; min-height: 1em; }
 </style>
 </head>
@@ -100,7 +109,16 @@
         <div><label>Volume</label><input type="range" id="vol" min="0" max="1" step="0.05" value="0.7"></div>
         <div style="flex:0;min-width:auto"><label>&nbsp;</label><button id="musicBtn">🎵 Music: on</button></div>
       </div>
-      <small class="help">Put your own .mp3 songs in <code>public/music/</code> and they play on a loop. Drums & effects are built in.</small>
+      <div class="np-row">
+        <div class="np-now"><span class="np-label">Now playing</span><b id="musicNow">—</b></div>
+        <div class="np-btns">
+          <button data-music="prev" title="Previous">⏮</button>
+          <button data-music="toggle" id="musicToggle" title="Play / Pause">⏯</button>
+          <button data-music="next" title="Next">⏭</button>
+        </div>
+      </div>
+      <div id="songs" class="songs"></div>
+      <small class="help">Click a song to play it now. The music is heard where the overlay is open (OBS / LIVE Studio).</small>
     </section>
   </div>
 
@@ -172,6 +190,21 @@
     $('simStatus').classList.add('sim');
     $('simBtn').textContent = s.simulating ? '■ Stop auto demo' : '▶ Start auto demo';
   });
+  // ----- music controls -----
+  let songsLoaded = false, nowUrl = null;
+  document.querySelectorAll('[data-music]').forEach(b => b.onclick = () => post('/api/music/cmd', { cmd: b.dataset.music }));
+  fetch('/api/music').then(r => r.json()).then(list => {
+    $('songs').innerHTML = list.map(t => `<div data-url="${esc(t.url)}">▶ ${esc(t.title)}</div>`).join('');
+    $('songs').querySelectorAll('div').forEach(d => d.onclick = () => post('/api/music/cmd', { cmd: 'play', url: d.dataset.url }));
+    songsLoaded = true; markSong();
+  });
+  function markSong() { $('songs').querySelectorAll('div').forEach(d => d.classList.toggle('on', d.dataset.url === nowUrl)); }
+  socket.on('music:now', m => {
+    nowUrl = m ? m.url : null;
+    $('musicNow').textContent = m ? `${m.paused ? '⏸ ' : '🎵 '}${m.title}` : 'Open the overlay in OBS / LIVE Studio to control the music';
+    if (songsLoaded) markSong();
+  });
+
   socket.on('settings', s => { settings = s; $('vol').value = s.volume; $('musicBtn').textContent = `🎵 Music: ${s.music ? 'on' : 'off'}`; });
   socket.on('state', s => {
     $('stGifts').textContent = s.stats.gifts.toLocaleString();

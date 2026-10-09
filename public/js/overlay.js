@@ -46,8 +46,15 @@
     else if (tr) { npText.textContent = tr.title; np.classList.add('on'); }
     else np.classList.remove('on');
   }
-  fetch('/api/music').then(r => r.json()).then(list => Sfx.loadMusic(list)).then(updateNowPlaying).catch(() => {});
-  Sfx.onTrack = updateNowPlaying;
+  fetch('/api/music').then(r => r.json()).then(list => Sfx.loadMusic(list)).then(onTrackChange).catch(() => {});
+  Sfx.onTrack = onTrackChange;
+  // the real overlay (not the panel's muted preview) tells the panel what's playing
+  function onTrackChange() {
+    updateNowPlaying();
+    if (params.get('sound') === '0') return;
+    const tr = Sfx.currentTrack();
+    socket.emit('music:now', tr ? { title: tr.title, url: tr.url, paused: Sfx.isPaused() } : null);
+  }
 
   // ---------- legend ----------
   // Gift legend: shows a few big cards at a time and rotates pages
@@ -58,14 +65,20 @@
     return `<div class="gcard" data-key="${g.key}"><div class="gi">${icon}</div>
       <div class="gt"><div class="gl">${esc(g.label)}</div><div class="gn">${esc(g.gift)}${price}</div></div></div>`;
   }
+  // live progress on the "every 1000 likes" card
+  let likeProgress = null;
+  function paintLikes() {
+    const el = document.querySelector('.gcard[data-key="likes"] .gn');
+    if (el && likeProgress) el.textContent = `❤️ ${likeProgress.value}/${likeProgress.goal}`;
+  }
   function showLegendPage(page, animate = true) {
     const pages = Math.max(1, Math.ceil(legendCards.length / perPage));
     legendPage = ((page % pages) + pages) % pages;
     const html = legendCards.slice(legendPage * perPage, legendPage * perPage + perPage).map(cardHtml).join('');
     const el = $('legend');
-    if (!animate) { el.innerHTML = html; return; }
+    if (!animate) { el.innerHTML = html; paintLikes(); return; }
     el.classList.add('fade');
-    setTimeout(() => { el.innerHTML = html; el.classList.remove('fade'); }, 350);
+    setTimeout(() => { el.innerHTML = html; paintLikes(); el.classList.remove('fade'); }, 350);
   }
   function startLegendTimer() {
     clearInterval(legendTimer);
@@ -238,6 +251,8 @@
     $('qejfTitle').textContent = texts.qejf;
     $('cakeTitle').textContent = texts.cake;
     renderLegend(s.config);
+    likeProgress = s.likes || null;
+    paintLikes();
     renderBoard(s.leaderboard);
     renderMeters(s);
     Scene.sync(s);
@@ -245,6 +260,13 @@
     else if (hadDrummer) Sfx.drum(0);
     Sfx.setFast(s.qejf.party);
     updateNowPlaying();
+  });
+
+  socket.on('music', m => {
+    if (m.cmd === 'next') Sfx.nextTrack();
+    else if (m.cmd === 'prev') Sfx.prevTrack();
+    else if (m.cmd === 'toggle') Sfx.togglePause();
+    else if (m.cmd === 'play' && m.url) Sfx.playUrl(m.url);
   });
 
   socket.on('settings', st => {

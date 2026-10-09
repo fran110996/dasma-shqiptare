@@ -161,12 +161,8 @@ const Sfx = (() => {
       if (!playlist.length) return null;
       music.src = playlist[0].url;
       music.volume = Math.min(1, volume * 0.55);
-      music.onended = () => {
-        track = (track + 1) % playlist.length;
-        music.src = playlist[track].url;
-        music.play().catch(() => {});
-        api.onTrack && api.onTrack(playlist[track]);
-      };
+      music.onended = () => api.nextTrack();
+      music.onplay = music.onpause = () => api.onTrack && api.onTrack(playlist[track]);
       return playlist[0];
     },
     setMusic(on) {
@@ -174,6 +170,24 @@ const Sfx = (() => {
       if (!on) music.pause();
       else if (playlist.length && ready()) music.play().catch(() => {});
     },
+    // controls (driven from the control panel)
+    playIndex(i) {
+      if (!playlist.length) return;
+      track = ((i % playlist.length) + playlist.length) % playlist.length;
+      music.src = playlist[track].url;
+      musicOn = true;
+      if (ready()) music.play().catch(() => {});
+      api.onTrack && api.onTrack(playlist[track]);
+    },
+    nextTrack() { api.playIndex(track + 1); },
+    prevTrack() { api.playIndex(track - 1); },
+    playUrl(url) { const i = playlist.findIndex(t => t.url === url); if (i >= 0) api.playIndex(i); },
+    togglePause() {
+      if (!playlist.length) return;
+      if (music.paused) { musicOn = true; if (ready()) music.play().catch(() => {}); }
+      else music.pause();
+    },
+    isPaused: () => music.paused,
     currentTrack: () => (playlist.length && musicOn ? playlist[track] : null),
     onTrack: null,
   };

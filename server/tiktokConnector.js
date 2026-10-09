@@ -122,7 +122,7 @@ class TikTokConnector extends EventEmitter {
 
     // LIKE
     this.connection.on('like', (data) => {
-      this.emit('like', { ...normalizeUser(data.user), likeCount: data.likeCount || 1 });
+      this.emit('like', { ...normalizeUser(data.user), likeCount: data.likeCount || 1, totalLikeCount: data.totalLikeCount || 0 });
     });
 
     // SHARE / FOLLOW

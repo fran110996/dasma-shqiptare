@@ -79,7 +79,11 @@ function status() {
 }
 const pushStatus = () => io.emit('status', status());
 
-tiktok.on('connected', () => { pushStatus(); game.log(`✅ Connected to @${tiktok.creatorUsername}`); });
+tiktok.on('connected', () => {
+  game.resetLikeGoal(); // a new LIVE starts its like count from zero
+  pushStatus();
+  game.log(`✅ Connected to @${tiktok.creatorUsername}`);
+});
 tiktok.on('disconnected', ({ intentional } = {}) => {
   pushStatus();
   if (intentional) return;
@@ -175,6 +179,15 @@ app.get('/api/music', (req, res) => {
   res.json(files.map(f => ({ url: `/music/${encodeURIComponent(f)}`, title: f.replace(/\.[^.]+$/, '') })));
 });
 
+// Music remote control: the panel sends commands, the overlay plays and reports back
+let musicNow = null;
+app.post('/api/music/cmd', (req, res) => {
+  const { cmd, url } = req.body || {};
+  if (!['next', 'prev', 'toggle', 'play'].includes(cmd)) return res.status(400).json({ error: 'unknown cmd' });
+  io.emit('music', { cmd, url });
+  res.json({ ok: true });
+});
+
 app.get('/overlay', (req, res) => res.sendFile(path.join(__dirname, '../public/overlay.html')));
 
 // -------------------------------------------------------
@@ -196,6 +209,11 @@ io.on('connection', socket => {
     game.log(`📺 Overlay closed (${overlays} open)`);
     pushStatus();
   });
+  socket.on('music:now', now => {
+    musicNow = now;
+    io.emit('music:now', musicNow);
+  });
+  socket.emit('music:now', musicNow);
   socket.emit('state', game.snapshot());
   socket.emit('status', status());
   socket.emit('settings', settings);

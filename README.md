@@ -6,7 +6,7 @@ Viewers send gifts during your TikTok LIVE and join an Albanian wedding on scree
 |---|---|---|
 | 🌹 Rose | 1 | **Tupan**: you play the drum (live 7/8 drum beat, +4s per rose) |
 | 💐 Rosa | 10 | **Futesh në valle**: you join the circle dance |
-| ❤️ 1000 likes | — | **Futesh në valle**: a viewer who sends 1000 likes in total joins the dance |
+| ❤️ Every 1000 likes | — | **Futesh në valle**: every 1000 likes in the LIVE, the viewer who liked most since the last goal joins the dance (progress shown on the card) |
 | 🕊️ Paper Crane | 99 | **Shoqja e nuses**: bride's friend (bride's side) |
 | 🎉 Confetti | 100 | **Bakshish**: money rain that piles up on the floor |
 | 💕 Hearts | 199 | **Shoku i dhëndrrit**: groom's best man (with hat & mustache) |
@@ -48,7 +48,8 @@ Optional `.env` (copy `.env.example`): `TIKTOK_USERNAME` auto-connects on start,
 
 ## Music
 
-Put your own `.mp3` files in `public/music/` and they play on a loop. The song name appears on screen.
+Put your own `.mp3` files in `public/music/` and they play on a loop (random order). The song name appears on screen.
+From the control panel you can see what's playing, pause, skip, go back or pick any song.
 The drum and all sound effects are synthesized, so no audio files are needed.
 
 ## Testing without being live

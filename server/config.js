@@ -19,7 +19,8 @@ module.exports = {
     { key: 'dhendri',  gift: 'Train',       aliases: [],                       coins: 899, label: 'Dhëndri',           icon: '🚂', role: 'groom' },
   ],
 
-  // A viewer who sends this many likes (in total) joins the dance
+  // Every N likes in the whole LIVE, the viewer who liked most since the last goal joins the dance.
+  // (TikTok only sends a sample of each viewer's likes, so per-viewer counting can't reach 1000.)
   likesToJoin: 1000,
 
   // Gift legend: cards shown at once (it rotates pages so text stays readable on phones)
@@ -59,8 +60,8 @@ module.exports = {
     share: '{name} ftoi miqtë në dasmë!',
     follow: '{name} u bë mik i dasmës!',
     joinedDance: '{name} u fut në valle!',
-    likesJoined: '{name} u fut në valle me 1000 like! ❤️',
-    likesCard: '1000 Like',
+    likesJoined: '{name} u fut në valle! ❤️ 1000 like',
+    likesCard: 'Çdo 1000 like',
     bakshish: '{name} hodhi bakshish!',
     drummer: '{name} i bie tupanit!',
     leaderboardTitle: 'BUJARËT E DASMËS',
