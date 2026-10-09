@@ -89,6 +89,8 @@ const RECONNECT_TRIES = 15;
 let reconnect = null;      // { username, sessionId, attempts, timer }
 let liveConnected = false; // true while we hold a working TikTok connection
 let lastSessionId = null;
+const lastLive = { username: null, activity: 0 }; // to tell a re-Connect from a new LIVE
+for (const ev of ['like', 'gift', 'comment', 'join']) tiktok.on(ev, () => { lastLive.activity = Date.now(); });
 
 function stopReconnect() {
   if (reconnect) clearTimeout(reconnect.timer);
@@ -125,9 +127,14 @@ tiktok.on('connected', () => {
     pushStatus();
     return;
   }
-  game.resetLikeGoal();
+  // pressing Connect again during the same LIVE keeps the like counters;
+  // a different account or 30+ minutes without activity counts as a new LIVE
+  const sameLive = lastLive.username === tiktok.creatorUsername && Date.now() - lastLive.activity < 30 * 60 * 1000;
+  if (!sameLive) game.resetLikeGoal();
+  lastLive.username = tiktok.creatorUsername;
+  lastLive.activity = Date.now();
   pushStatus();
-  game.log(`✅ Connected to @${tiktok.creatorUsername}`);
+  game.log(`✅ Connected to @${tiktok.creatorUsername}${sameLive ? ' (same LIVE, like counters kept)' : ''}`);
 });
 tiktok.on('disconnected', ({ intentional } = {}) => {
   pushStatus();
