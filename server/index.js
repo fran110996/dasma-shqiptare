@@ -35,7 +35,14 @@ app.use('/api', (req, res, next) => {
   if (req.get('x-admin-key') === pass) return next();
   res.status(401).json({ error: 'Wrong password', auth: true });
 });
-app.use(express.static(path.join(__dirname, '../public')));
+// Overlay code must never be cached (LIVE Studio / OBS would keep running an old version)
+const noCache = res => res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+app.use(express.static(path.join(__dirname, '../public'), {
+  setHeaders: (res, file) => { if (/\.(html|js|css)$/.test(file)) noCache(res); },
+}));
+
+// Bump together with OVERLAY_VERSION in public/js/overlay.js to spot overlays running old code
+const CLIENT_VERSION = '2026-10-09b';
 
 const tiktok = new TikTokConnector();
 const sim = new Simulator();
@@ -245,24 +252,47 @@ let musicNow = null;
 app.post('/api/music/cmd', (req, res) => {
   const { cmd, url } = req.body || {};
   if (!['next', 'prev', 'toggle', 'play'].includes(cmd)) return res.status(400).json({ error: 'unknown cmd' });
-  io.emit('music', { cmd, url });
+  const command = { cmd, url, t: Date.now() };
   game.log(`🎵 Panel: ${cmd}${url ? ' ' + decodeURIComponent(url.split('/').pop()) : ''}`);
+  if (!overlays) {
+    pendingMusic = command; // applied as soon as an overlay (re)connects
+    game.log('⚠️ No overlay open: the music command will be applied when it reconnects');
+  } else {
+    io.emit('music', command);
+    setTimeout(() => { if (musicNowAt < command.t) game.log('⚠️ No overlay reacted to the music command'); }, 4000);
+  }
   res.json({ ok: true });
 });
 
-app.get('/overlay', (req, res) => res.sendFile(path.join(__dirname, '../public/overlay.html')));
+app.get('/overlay', (req, res) => { noCache(res); res.sendFile(path.join(__dirname, '../public/overlay.html')); });
 
 // -------------------------------------------------------
 // Socket.io
 // -------------------------------------------------------
 // Count open overlays so we can tell if OBS is actually showing the game
 let overlays = 0;
+let pendingMusic = null, musicNowAt = 0;
+function clientName(ua = '') {
+  if (/OBS/i.test(ua)) return 'OBS';
+  if (/TikTok|LiveStudio|Live ?Studio|bytedance|Electron/i.test(ua)) return 'LIVE Studio';
+  if (/Edg\//.test(ua)) return 'Edge';
+  if (/Chrome\//.test(ua)) return 'Chrome';
+  if (/Safari\//.test(ua)) return 'Safari';
+  return 'unknown app';
+}
 io.on('connection', socket => {
-  socket.on('hello', ({ role } = {}) => {
+  socket.on('hello', ({ role, v } = {}) => {
     if (role !== 'overlay' || socket.data.overlay) return;
     socket.data.overlay = true;
     overlays++;
-    game.log(`📺 Overlay opened (${overlays} open)`);
+    const app = clientName(socket.handshake.headers['user-agent']);
+    const outdated = v !== CLIENT_VERSION ? ` · ⚠️ OLD VERSION (${v || 'cached'}), refresh the source` : '';
+    game.log(`📺 Overlay opened (${overlays} open) · ${app}${outdated}`);
+    if (pendingMusic && Date.now() - pendingMusic.t < 60000) {
+      socket.emit('music', pendingMusic);
+      game.log('🎵 Applied the pending music command');
+    }
+    pendingMusic = null;
     pushStatus();
   });
   socket.on('disconnect', () => {
@@ -272,6 +302,7 @@ io.on('connection', socket => {
     pushStatus();
   });
   socket.on('music:now', now => {
+    musicNowAt = Date.now();
     const changed = JSON.stringify(now) !== JSON.stringify(musicNow);
     if (changed) game.log(now ? `🎵 ${now.paused ? 'Paused' : 'Playing'}: ${now.title}` : '🎵 Music stopped');
     musicNow = now;

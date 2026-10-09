@@ -235,7 +235,8 @@
 
   // ---------- socket ----------
   const socket = io();
-  socket.on('connect', () => socket.emit('hello', { role: params.get('sound') === '0' ? 'preview' : 'overlay' }));
+  const OVERLAY_VERSION = '2026-10-09b'; // keep in sync with CLIENT_VERSION in server/index.js
+  socket.on('connect', () => socket.emit('hello', { role: params.get('sound') === '0' ? 'preview' : 'overlay', v: OVERLAY_VERSION }));
 
   socket.on('state', s => {
     const hadDrummer = !!state?.drummer;
