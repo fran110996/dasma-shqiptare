@@ -253,10 +253,10 @@ class WeddingEngine {
     this.likesByUser.set(u.userId, after);
     if (before < N && after >= N) {
       if (this.isInScene(u.userId)) {
-        this.log(`❤️ ${u.nickname} reached ${N} likes (already in the wedding)`);
+        this.log(`❤️ ${u.nickname} reached ${N} counted likes (already in the wedding)`);
       } else {
         this.addDancer(u.userId);
-        this.log(`❤️ ${u.nickname} reached ${N} likes → Futesh në valle`);
+        this.log(`❤️ ${u.nickname} reached ${N} counted likes → Futesh në valle`);
         this.fx('dancer', { user: this.publicUser(u), added: true, viaLikes: true, text: fmt(config.texts.likesJoined, { name: u.nickname }) });
       }
     }

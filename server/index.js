@@ -65,6 +65,7 @@ tiktok.on('gifts:catalog', gifts => game.onGiftCatalog(gifts));
 
 // One-line activity summary per minute while LIVE, to confirm events are flowing
 const minute = { joins: 0, likes: 0, comments: 0, gifts: 0 };
+let lastLiveTotal = 0;
 tiktok.on('join', () => minute.joins++);
 tiktok.on('like', d => { minute.likes += d.likeCount || 1; });
 tiktok.on('comment', () => minute.comments++);
@@ -72,7 +73,11 @@ tiktok.on('gift', d => { minute.gifts += d.repeatCount || 1; });
 setInterval(() => {
   if (!tiktok.isConnected) return;
   const top = game.topLikers(3).map(t => `${t.name} ${t.likes}`).join(', ');
-  game.log(`📊 Last minute: ${minute.joins} joins · ${minute.likes} likes · ${minute.comments} comments · ${minute.gifts} gifts${top ? ` | top likers: ${top}` : ''}`);
+  // TikTok's own like total (what viewers see) vs what reached the game this minute
+  const liveDelta = lastLiveTotal ? game.liveLikes - lastLiveTotal : 0;
+  lastLiveTotal = game.liveLikes;
+  const coverage = liveDelta > 0 ? ` (TikTok total +${liveDelta}, ${Math.round(minute.likes / liveDelta * 100)}% counted)` : '';
+  game.log(`📊 Last minute: ${minute.joins} joins · ${minute.likes} likes${coverage} · ${minute.comments} comments · ${minute.gifts} gifts${top ? ` | top likers: ${top}` : ''}`);
   Object.keys(minute).forEach(k => { minute[k] = 0; });
 }, 60000);
 
