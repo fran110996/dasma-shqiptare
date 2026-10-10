@@ -46,6 +46,9 @@
     else if (tr) { npText.textContent = tr.title; np.classList.add('on'); }
     else np.classList.remove('on');
   }
+  // the panel's preview (?sound=0) stays silent: no music at all
+  const muted = params.get('sound') === '0';
+  if (muted) Sfx.setMusic(false);
   fetch('/api/music').then(r => r.json()).then(list => Sfx.loadMusic(list)).then(onTrackChange).catch(() => {});
   Sfx.onTrack = onTrackChange;
   // the real overlay (not the panel's muted preview) tells the panel what's playing
@@ -245,7 +248,7 @@
     const seconds = ev.seconds || 20;
     const cfg = state?.config || {};
     Scene.krushqit(ev.people || [], seconds, elapsed, { bpm: ev.bpm, firstBeat: ev.firstBeat, songStart: ev.songStart });
-    if (ev.song || cfg.krushqit) {
+    if (!muted && (ev.song || cfg.krushqit)) {
       const song = ev.song || '/sfx/krushqit.mp3';
       Sfx.playEvent(song, (ev.songStart ?? 1.5) + elapsed, seconds - elapsed);
     }
@@ -302,11 +305,11 @@
       socket.emit('music:ack', { cmd: m.cmd, error: err.message });
     }
   });
-  Sfx.onError = msg => socket.emit('music:ack', { cmd: 'play', error: msg });
+  if (!muted) Sfx.onError = msg => socket.emit('music:ack', { cmd: 'play', error: msg });
 
   socket.on('settings', st => {
     if (params.get('vol') == null) Sfx.setVolume(st.volume);
-    Sfx.setMusic(st.music);
+    if (!muted) Sfx.setMusic(st.music);
     updateNowPlaying();
   });
 
