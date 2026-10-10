@@ -287,6 +287,7 @@ io.on('connection', socket => {
     socket.data.overlay = true;
     overlays++;
     const app = clientName(socket.handshake.headers['user-agent']);
+    socket.data.app = app;
     const outdated = v !== CLIENT_VERSION ? ` · ⚠️ OLD VERSION (${v || 'cached'}), refresh the source` : '';
     game.log(`📺 Overlay opened (${overlays} open) · ${app}${outdated}`);
     if (pendingMusic && Date.now() - pendingMusic.t < 60000) {
@@ -301,6 +302,12 @@ io.on('connection', socket => {
     overlays--;
     game.log(`📺 Overlay closed (${overlays} open)`);
     pushStatus();
+  });
+  socket.on('music:ack', a => {
+    musicNowAt = Date.now();
+    const who = socket.data.app || 'overlay';
+    if (a.error) game.log(`⚠️ ${who} could not play music (${a.cmd}): ${a.error}`);
+    else game.log(`🎵 ${who} did "${a.cmd}" → ${a.playing ? 'playing' : 'PAUSED'} ${a.title || ''} (effects audio ${a.audio})`);
   });
   socket.on('music:now', now => {
     musicNowAt = Date.now();

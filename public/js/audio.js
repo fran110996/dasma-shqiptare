@@ -29,6 +29,15 @@ const Sfx = (() => {
 
   const ready = () => ctx && ctx.state === 'running';
 
+  // <audio> playback (music, event songs) works even when the Web Audio context (drum, effects)
+  // is still locked — e.g. inside TikTok LIVE Studio — so never gate it on ready().
+  // Failures are reported so they show up in the server logs.
+  function playMedia(el) {
+    const p = el.play();
+    if (p && p.catch) p.catch(err => api.onError && api.onError(`${err.name}: ${err.message}`));
+    if (ctx && ctx.state !== 'running') ctx.resume().catch(() => {});
+  }
+
   function env(g, t, a, peak, d) {
     g.gain.setValueAtTime(0.0001, t);
     g.gain.exponentialRampToValueAtTime(peak, t + a);
@@ -111,7 +120,7 @@ const Sfx = (() => {
       const go = () => {
         try { eventAudio.currentTime = start; } catch (_) {}
         eventAudio.volume = Math.min(1, volume * 0.9);
-        if (ready()) eventAudio.play().catch(() => {});
+        playMedia(eventAudio);
       };
       if (eventAudio.readyState >= 1) go(); else eventAudio.addEventListener('loadedmetadata', go, { once: true });
       clearInterval(eventFade);
@@ -195,6 +204,7 @@ const Sfx = (() => {
       music.volume = Math.min(1, volume * 0.55);
       music.onended = () => api.nextTrack();
       music.onplay = music.onpause = () => api.onTrack && api.onTrack(playlist[track]);
+      if (musicOn) playMedia(music); // OBS / LIVE Studio allow autoplay: start without waiting for a click
       return playlist[0];
     },
     setMusic(on) {
@@ -208,7 +218,7 @@ const Sfx = (() => {
       track = ((i % playlist.length) + playlist.length) % playlist.length;
       music.src = playlist[track].url;
       musicOn = true;
-      if (ready()) music.play().catch(() => {});
+      playMedia(music);
       api.onTrack && api.onTrack(playlist[track]);
     },
     nextTrack() { api.playIndex(track + 1); },
@@ -216,7 +226,7 @@ const Sfx = (() => {
     playUrl(url) { const i = playlist.findIndex(t => t.url === url); if (i >= 0) api.playIndex(i); },
     togglePause() {
       if (!playlist.length) return;
-      if (music.paused) { musicOn = true; if (ready()) music.play().catch(() => {}); }
+      if (music.paused) { musicOn = true; playMedia(music); }
       else music.pause();
     },
     isPaused: () => music.paused,

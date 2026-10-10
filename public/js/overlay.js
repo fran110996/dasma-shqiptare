@@ -289,11 +289,20 @@
   });
 
   socket.on('music', m => {
-    if (m.cmd === 'next') Sfx.nextTrack();
-    else if (m.cmd === 'prev') Sfx.prevTrack();
-    else if (m.cmd === 'toggle') Sfx.togglePause();
-    else if (m.cmd === 'play' && m.url) Sfx.playUrl(m.url);
+    if (params.get('sound') === '0') return; // the panel's muted preview doesn't play music
+    try {
+      if (m.cmd === 'next') Sfx.nextTrack();
+      else if (m.cmd === 'prev') Sfx.prevTrack();
+      else if (m.cmd === 'toggle') Sfx.togglePause();
+      else if (m.cmd === 'play' && m.url) Sfx.playUrl(m.url);
+      // report back after the browser had a moment to start playing
+      setTimeout(() => socket.emit('music:ack', { cmd: m.cmd, playing: !Sfx.isPaused(), title: Sfx.currentTrack()?.title,
+        audio: Sfx.isRunning() ? 'unlocked' : 'locked' }), 700);
+    } catch (err) {
+      socket.emit('music:ack', { cmd: m.cmd, error: err.message });
+    }
   });
+  Sfx.onError = msg => socket.emit('music:ack', { cmd: 'play', error: msg });
 
   socket.on('settings', st => {
     if (params.get('vol') == null) Sfx.setVolume(st.volume);
