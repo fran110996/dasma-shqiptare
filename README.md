@@ -7,16 +7,14 @@ Viewers send gifts during your TikTok LIVE and join an Albanian wedding on scree
 | 🌹 Rose | 1 | **Tupan**: you play the drum (live 7/8 drum beat, +4s per rose) |
 | 💐 Rosa | 10 | **Futesh në valle**: you join the circle dance |
 | ❤️ 1000 likes | — | **Futesh në valle**: a viewer who sends 1000 likes during the LIVE joins the dance |
-| 🕊️ Paper Crane | 99 | **Shoqja e nuses**: bride's friend (bride's side) |
 | 🎉 Confetti | 100 | **Bakshish**: money rain that piles up on the floor |
-| 💕 Hearts | 199 | **Shoku i dhëndrrit**: groom's best man (with hat & mustache) |
 | 🪕 Semsemia | 200 | **Dolli për çiftin**: everyone raises a glass and toasts the couple |
 | 🤠 Pink Cowboy | 450 | **Nusja**: you become the bride |
 | 🚂 Train | 899 | **Dhëndri**: you become the groom |
 
 Also:
 - **Bujarët e dasmës** leaderboard. The #1 gifter is the **KUMBARI** 👑 and leads the dance.
-- **TORTA** meter fills with coins. When it's full, the cake is cut with fireworks.
+- **KRUSHQIT – 50K LIKES**: every 50,000 likes of the LIVE, the groom's wedding procession arrives for 20 seconds: led by the flag bearer, with the song *Vallja e Krushqve* playing automatically, dancing on the song's beat around the couple. The krushqit are the viewers who sent the most likes. Settings in `server/config.js` (`krushqit`).
 - **QEJFI** meter fills with likes, chat and gifts. At 100% the party mode starts.
 - Viewers on screen get chat bubbles. Typing **HOP** makes their character jump.
 - Welcome messages for new viewers, plus shares and follows.
@@ -54,8 +52,8 @@ The drum and all sound effects are synthesized, so no audio files are needed.
 
 ## Testing without being live
 
-The control panel has test buttons for every gift, likes, joins, shares and chat, plus:
-- **🎬 Showcase (55s)**: a scripted sequence of every feature, good for recording a demo.
+The control panel has test buttons for every gift, likes, joins, shares and chat, plus **🎺 Test Krushqit**, and:
+- **🎬 Showcase (78s)**: a scripted sequence of every feature, good for recording a demo.
 - **▶ Auto demo**: random viewers and gifts running continuously.
 
 ## Deploy on Render

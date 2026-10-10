@@ -9,6 +9,8 @@ const Sfx = (() => {
   let drumUntil = 0, drumFast = false, nextStep = 0, step = 0, drumTimer = null;
   const music = new Audio();
   let playlist = [], track = 0, musicOn = true;
+  const eventAudio = new Audio();
+  let eventUntil = 0, eventFade = null;
 
   function ensure() {
     if (ctx) return ctx;
@@ -95,7 +97,37 @@ const Sfx = (() => {
       if (master) master.gain.value = v;
       music.volume = Math.min(1, v * 0.55);
     },
-    drum(untilMs, fast = false) { drumUntil = untilMs; drumFast = fast; },
+    drum(untilMs, fast = false) { drumUntil = eventUntil > Date.now() ? 0 : untilMs; drumFast = fast; },
+
+    // Event song (KRUSHQIT): starts at `start` seconds, fades out at the end, then the playlist resumes
+    playEvent(url, start, seconds) {
+      const now = Date.now();
+      eventUntil = now + seconds * 1000;
+      drumUntil = 0;
+      const resumeMusic = !music.paused;
+      music.pause();
+      eventAudio.src = url;
+      eventAudio.currentTime = 0;
+      const go = () => {
+        try { eventAudio.currentTime = start; } catch (_) {}
+        eventAudio.volume = Math.min(1, volume * 0.9);
+        if (ready()) eventAudio.play().catch(() => {});
+      };
+      if (eventAudio.readyState >= 1) go(); else eventAudio.addEventListener('loadedmetadata', go, { once: true });
+      clearInterval(eventFade);
+      eventFade = setInterval(() => {
+        const left = eventUntil - Date.now();
+        if (left <= 0) {
+          clearInterval(eventFade);
+          eventAudio.pause();
+          if (resumeMusic && musicOn) music.play().catch(() => {});
+        } else if (left < 2000) {
+          eventAudio.volume = Math.max(0, Math.min(1, volume * 0.9) * (left / 2000));
+        }
+      }, 100);
+    },
+    // current position in the event song (null when none is playing) → used to dance on the beat
+    eventSongTime: () => (Date.now() < eventUntil && !eventAudio.paused ? eventAudio.currentTime : null),
     setFast(fast) { drumFast = fast; },
     drumBeatPhase() {
       // 0..1 position within current drum step (for the drummer animation)

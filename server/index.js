@@ -215,6 +215,7 @@ app.post('/api/test', (req, res) => {
     case 'comment': sim.comment(text); break;
     case 'like': sim.like(Number(count) || 50); break;
     case 'like1k': sim.like(require('./config').likesToJoin); break;
+    case 'krushqit': game.triggerKrushqit('test'); break;
     case 'join': sim.join(); break;
     case 'share': sim.share(); break;
     case 'follow': sim.follow(); break;

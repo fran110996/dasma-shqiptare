@@ -891,6 +891,157 @@ const Scene = (() => {
     if (particles.length > 1400) particles.splice(0, particles.length - 1400);
   }
 
+
+  // -----------------------------------------------------------
+  // KRUSHQIT: the groom's wedding procession (50K likes event)
+  // Enters from the left led by the flag bearer, dances on the song's beat
+  // around the couple, jumps together at the climax, leaves to the right.
+  // -----------------------------------------------------------
+  const KRUSH_SLOTS = [
+    { x: 438, y: 1100 },                        // 0: flag bearer, in front of the groom
+    { x: 350, y: 1074 }, { x: 706, y: 1080 },
+    { x: 262, y: 1098 }, { x: 792, y: 1102 },
+    { x: 182, y: 1068 }, { x: 878, y: 1070 },
+    { x: 312, y: 1124 }, { x: 618, y: 1126 },
+    { x: 960, y: 1112 },
+  ];
+  const KRUSH_WOMEN = [0, 0, 1, 0, 1, 0, 0, 1, 0, 1];
+  const PAL_KRUSH_MAN = { ...PAL.man, vest: '#8f0b11', sash: '#151515' };
+  const PAL_KRUSH_WOMAN = { ...PAL.woman, vest: '#151515', apron: '#c4141b' };
+  let krush = null;
+  let krushFocus = 0; // 0..1: how much the regular valle fades back while the krushqit are on stage
+
+  function startKrush(people, seconds, elapsed = 0, opts = {}) {
+    const n = Math.min(KRUSH_SLOTS.length, Math.max(7, people.length));
+    krush = {
+      start: performance.now() - elapsed * 1000, dur: seconds,
+      bpm: opts.bpm || 156.6, firstBeat: opts.firstBeat ?? 0.279, songStart: opts.songStart ?? 1.5,
+      climaxFired: elapsed > seconds - 6.2,
+      people: Array.from({ length: n }, (_, i) => ({ i, user: people[i] || null, woman: !!KRUSH_WOMEN[i], seed: Math.random() * 6 })),
+    };
+    if (elapsed < 1) { confetti(90); hearts(561, 860, 10, 60); }
+  }
+
+  function krushBeat(t) {
+    const song = Sfx.eventSongTime();
+    const songTime = song != null ? song : krush.songStart + t;
+    return (songTime - krush.firstBeat) * krush.bpm / 60;
+  }
+
+  // position + pose of one krushk at time t (seconds since the event started)
+  function krushState(k, t, beat) {
+    const slot = KRUSH_SLOTS[k.i];
+    const from = { x: -80, y: 1110 }, enterAt = 0.6 + k.i * 0.42;
+    const walkIn = Math.hypot(slot.x - from.x, slot.y - from.y) / 300;
+    const exitAt = krush.dur - 3.3 + k.i * 0.1;
+    const step = beat * Math.PI;
+    const walkPose = (carry) => ({
+      bob: -Math.abs(Math.sin(step)) * 5, sway: Math.sin(step) * 4,
+      lf: { x: -9 + Math.sin(step) * 9, y: -Math.max(0, Math.sin(step)) * 12 },
+      rf: { x: 9 - Math.sin(step) * 9, y: -Math.max(0, -Math.sin(step)) * 12 },
+      hands: carry
+        ? [{ x: -34, y: -150, bend: -4, pole: true }, { x: 24 + Math.sin(step) * 4, y: -92, bend: 3 }]
+        : [{ x: -24 + Math.sin(step) * 6, y: -92, bend: 3 }, { x: 24 - Math.sin(step) * 6, y: -92, bend: 3 }],
+    });
+    if (t < enterAt) return null;
+    if (t < enterAt + walkIn) {
+      const p = (t - enterAt) / walkIn;
+      return { x: from.x + (slot.x - from.x) * p, y: from.y + (slot.y - from.y) * p, pose: walkPose(k.i === 0), jump: 0 };
+    }
+    if (t >= exitAt) {
+      const p = (t - exitAt) * 380;
+      const x = slot.x + p;
+      if (x > 1150) return null;
+      return { x, y: slot.y + 4, pose: walkPose(k.i === 0), jump: 0, fade: Math.min(1, (1150 - x) / 80) };
+    }
+    // dancing in place on the beat
+    const climax = t > krush.dur - 6.2 && t < krush.dur - 3.6;
+    const kick = Math.floor(beat + k.i) % 4 === 3;
+    const wave = Math.sin(step * 0.5 + k.seed);
+    const pose = {
+      bob: -Math.abs(Math.sin(step)) * 6, sway: Math.sin(step) * 6,
+      lf: { x: -9, y: 0 },
+      rf: kick ? { x: 18, y: -26 * Math.sin((beat % 1) * Math.PI) } : { x: 9, y: 0 },
+      hands: k.i === 0
+        ? [{ x: -34, y: -150, bend: -4, pole: true }, { x: 26, y: -150 + wave * 10, bend: -6, hanky: t + k.seed }]
+        : [{ x: -28, y: -170 + wave * 12, bend: -6, hanky: (k.i % 2) ? t + k.seed : 0 },
+           { x: 28, y: -170 - wave * 12, bend: -6, hanky: (k.i % 2) ? 0 : t + k.seed }],
+    };
+    const jump = climax ? Math.abs(Math.sin(beat * Math.PI / 2)) * 46 : 0;
+    if (climax) pose.hands = k.i === 0
+      ? [{ x: -34, y: -150, bend: -4, pole: true }, { x: 30, y: -196, bend: -8, hanky: t }]
+      : [{ x: -30, y: -196, bend: -8, hanky: t }, { x: 30, y: -196, bend: -8 }];
+    return { x: slot.x, y: slot.y, pose, jump };
+  }
+
+  function krushItems(now) {
+    if (!krush) { krushFocus = 0; return []; }
+    const t = (now - krush.start) / 1000;
+    if (t > krush.dur + 1) { krush = null; krushFocus = 0; return []; }
+    krushFocus = clamp(Math.min(t / 1.2, (krush.dur - t) / 1.5), 0, 1);
+    const beat = krushBeat(t);
+    if (!krush.climaxFired && t > krush.dur - 6.2) { krush.climaxFired = true; fireworks(6); confetti(120); }
+    const out = [];
+    for (const k of krush.people) {
+      const st = krushState(k, t, beat);
+      if (!st) continue;
+      const enterFade = Math.min(1, (st.x + 80) / 70);
+      out.push({ krushk: k, x: st.x, y: st.y, s: 0.94, pose: st.pose, jump: st.jump, alpha: Math.min(enterFade, st.fade ?? 1), t });
+    }
+    return out;
+  }
+
+  // face for krushqit without a profile picture
+  function drawFace(c, y, r, woman) {
+    c.fillStyle = '#efc6a0'; c.beginPath(); c.arc(0, y, r, 0, TAU); c.fill();
+    c.fillStyle = woman ? '#3a2214' : '#24170f';
+    c.beginPath(); c.arc(0, y, r, Math.PI * 1.05, Math.PI * 1.95); c.lineTo(r * 0.8, y - r * 0.2);
+    c.quadraticCurveTo(0, y - r * 0.55, -r * 0.8, y - r * 0.2); c.closePath(); c.fill();
+    if (woman) { c.fillRect(-r, y - r * 0.3, r * 0.22, r * 1.1); c.fillRect(r * 0.78, y - r * 0.3, r * 0.22, r * 1.1); }
+    c.fillStyle = '#2a1a10';
+    for (const ex of [-0.33, 0.33]) { c.beginPath(); c.arc(ex * r, y + r * 0.02, r * 0.09, 0, TAU); c.fill(); }
+    c.strokeStyle = '#8a3b2a'; c.lineWidth = r * 0.08;
+    c.beginPath(); c.arc(0, y + r * 0.22, r * 0.3, 0.2 * Math.PI, 0.8 * Math.PI); c.stroke();
+    if (!woman) drawMustache(c, y + r * 0.18, r * 0.62);
+    c.strokeStyle = '#fff'; c.lineWidth = r * 0.12; c.beginPath(); c.arc(0, y, r, 0, TAU); c.stroke();
+  }
+
+  // the Albanian flag on a pole, carried by the flag bearer
+  function drawPoleFlag(c, hx, hy, t) {
+    const top = hy - 78; // short pole: a taller one hides the flag behind the leaderboard panel
+    c.strokeStyle = '#7a4a1c'; c.lineWidth = 5; c.lineCap = 'round';
+    c.beginPath(); c.moveTo(hx, hy + 40); c.lineTo(hx, top); c.stroke();
+    c.fillStyle = '#f6c544'; c.beginPath(); c.arc(hx, top - 5, 6, 0, TAU); c.fill();
+    const fw = 116, fh = 74, strips = 29, sw = fw / strips;
+    for (let i = 0; i < strips; i++) {
+      const ph = i * 0.35 - t * 7;
+      const dy = Math.sin(ph) * 5 * (i / strips);
+      // the flag flies to the LEFT of the pole (away from the couple); strip i=0 is next to the pole
+      const fx = hx - (strips - i) * sw;
+      c.drawImage(flagCanvas, i * flagCanvas.width / strips, 0, flagCanvas.width / strips, flagCanvas.height,
+        fx, top + 2 + Math.sin((strips - i) * 0.35 - t * 7) * 5 * ((strips - i) / strips), sw + 0.6, fh);
+      const sh = Math.cos(ph);
+      c.fillStyle = sh > 0 ? `rgba(255,255,255,${sh * 0.12})` : `rgba(0,0,0,${-sh * 0.25})`;
+      c.fillRect(fx, top + 2 + Math.sin((strips - i) * 0.35 - t * 7) * 5 * ((strips - i) / strips), sw + 0.6, fh);
+    }
+  }
+
+  function drawKrushk(c, it) {
+    const k = it.krushk, pose = it.pose;
+    c.save();
+    c.globalAlpha = it.alpha;
+    c.translate(it.x, it.y - it.jump);
+    c.scale(it.s, it.s);
+    if (k.woman) drawWoman(c, PAL_KRUSH_WOMAN, pose); else drawMan(c, PAL_KRUSH_MAN, pose);
+    const R = 28, headY = -167 + pose.bob;
+    if (k.user) drawHead(c, k.user, 0, headY, R, '#f6c544'); else drawFace(c, headY, R, k.woman);
+    if (k.woman) drawCoinBand(c, headY - R - 2, R); else drawQeleshe(c, headY - R + 5, false);
+    const pole = pose.hands.find(h => h.pole);
+    if (pole) drawPoleFlag(c, pole.x, pole.y, it.t);
+    if (k.user) nameTag(c, k.user.name, headY - R - 10, 0.9, false);
+    c.restore();
+  }
+
   // -----------------------------------------------------------
   // Main render
   // -----------------------------------------------------------
@@ -976,6 +1127,7 @@ const Scene = (() => {
     }
     // ---- best men (groom's side) & bridesmaids (bride's side) ----
     for (const role of ['bestman', 'bridesmaid']) {
+      if (state && !state.config.gifts.some(g => g.role === role)) continue;
       const list = [...ents.values()].filter(e => e.kind === role);
       for (let i = 0; i < 2; i++) {
         const P = POS[role][i];
@@ -1021,6 +1173,8 @@ const Scene = (() => {
     if (coupleSince && now - lastHeart > 900) { lastHeart = now; hearts(561, 830, 2, 16); }
     if (party && now - lastConf > 300) { lastConf = now; confetti(6); }
 
+    items.push(...krushItems(now));
+
     // depth sort & draw
     items.sort((a, b) => (a.e ? a.e.y : a.y) - (b.e ? b.e.y : b.y));
     for (const it of items) drawItem(ctx, it, now, t);
@@ -1035,6 +1189,7 @@ const Scene = (() => {
   const GHOST_INFO = { bride: 'nusja', groom: 'dhendri', bestman: 'shok', bridesmaid: 'shoqja', drummer: 'tupan' };
 
   function drawItem(c, it, now, t) {
+    if (it.krushk) return drawKrushk(c, it);
     const ghost = !!it.ghost;
     const e = it.e;
     const kind = ghost ? it.ghost : e.kind;
@@ -1047,6 +1202,7 @@ const Scene = (() => {
       s *= age < 450 ? Math.max(0.01, easeOutBack(k)) : 1;
       alpha = k;
       if (e.leaving) alpha = clamp(1 - (now - e.leaving) / 450, 0, 1);
+      if (e.kind === 'dancer' && krushFocus) alpha *= 1 - 0.6 * krushFocus; // let the procession stand out
       if (e.jumpT) {
         const jk = (now - e.jumpT) / 650;
         if (jk < 1) jump = Math.sin(jk * Math.PI) * 70; else e.jumpT = 0;
@@ -1146,6 +1302,7 @@ const Scene = (() => {
     sparkleUser(userId) { for (const e of entsOf(userId)) sparks(e.x, e.y - 160 * e.s, 30); },
     clearPile() { pileCanvas.getContext('2d').clearRect(0, 0, W, 300); heights.fill(0); },
     isParty: () => party,
+    krushqit(people, seconds, elapsed = 0, opts = {}) { startKrush(people, seconds, elapsed, opts); },
     toast(seconds, text) {
       startToast(seconds);
       const people = [...ents.values()].filter(e => !e.leaving && e.kind !== 'drummer');

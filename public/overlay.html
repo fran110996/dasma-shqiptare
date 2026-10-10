@@ -185,7 +185,20 @@
   #qejf.party .tube { animation: partyTube .4s infinite alternate; }
   @keyframes partyTube { to { border-color: #fff; box-shadow: 0 0 30px #ffcc00, inset 0 0 10px #000; } }
 
-  #cake { left: 18px; top: 838px; }
+  /* KRUSHQIT likes meter (replaced the cake) */
+  #krushqit { left: 10px; top: 830px; width: 104px; }
+  #krushqit .kbanner {
+    display: flex; flex-direction: column; align-items: center; padding: 6px 4px 5px; margin-bottom: 6px; width: 104px;
+    background: linear-gradient(180deg, #e41e20, #9a0c12); border: 3px solid var(--gold); border-radius: 12px;
+    box-shadow: 0 6px 14px rgba(0,0,0,.6); text-align: center; line-height: 1;
+  }
+  #krushqit .kbanner span { font-family: 'Lilita One', sans-serif; font-size: 21px; color: #fff; letter-spacing: .5px; text-shadow: 0 2px 0 #5a0508; }
+  #krushqit .kbanner small { font-size: 15px; font-weight: 800; color: var(--gold); margin-top: 3px; }
+  #krushqit .tube { height: 190px; }
+  #krushqit .fill { background: linear-gradient(0deg, #b30d13, #e41e20 55%, #f6c544); box-shadow: 0 0 18px #ff4a3a; }
+  #krushqit .lvl { font-size: 15px; font-weight: 800; color: #ffe3a0; text-shadow: 0 2px 0 #000; white-space: nowrap; }
+  #krushqit.on .tube { animation: partyTube .4s infinite alternate; }
+  #cake { display: none; }
   #cake .tube { height: 210px; }
   #cake .fill { background: linear-gradient(0deg, #ff5fa2, #ff9cc8 60%, #fff0f6); box-shadow: 0 0 18px #ff6fb0; }
   #cake .lvl { font-size: 15px; font-weight: 800; color: #ffd5ea; text-shadow: 0 2px 0 #000; }
@@ -269,12 +282,11 @@
     <div class="st">Dasma po fillon</div>
   </div>
 
-  <div id="cake" class="ui meter">
-    <div class="ic">🎂</div>
-    <div class="mt" id="cakeTitle">TORTA</div>
+  <div id="krushqit" class="ui meter">
+    <div class="kbanner"><span id="kTitle">KRUSHQIT</span><small id="kGoal">50K LIKES</small></div>
     <div class="tube"><div class="fill"></div></div>
     <div class="pc">0%</div>
-    <div class="lvl">Nr. 1</div>
+    <div class="lvl">0 / 50K</div>
   </div>
 
   <div id="np" class="ui"><div class="eq"><i></i><i></i><i></i><i></i></div><span id="npText"></span></div>

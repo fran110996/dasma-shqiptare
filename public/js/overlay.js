@@ -155,10 +155,14 @@
     q.querySelector('.st').textContent = s.qejf.party ? (texts.party || '') : s.qejf.label;
     q.classList.toggle('party', s.qejf.party);
 
-    const c = $('cake'), cv = Math.min(100, Math.floor(s.cake.coins / s.cake.goal * 100));
-    c.querySelector('.fill').style.height = cv + '%';
-    c.querySelector('.pc').textContent = cv + '%';
-    c.querySelector('.lvl').textContent = `Nr. ${s.cake.level} · ${s.cake.coins}/${s.cake.goal}`;
+    if (s.krushqit) {
+      const k = $('krushqit'), kp = Math.min(100, Math.floor(s.krushqit.value / s.krushqit.goal * 100));
+      const fmtK = n => n >= 1000 ? (n / 1000).toFixed(n >= 10000 ? 0 : 1).replace(/\.0$/, '') + 'K' : String(n);
+      k.querySelector('.fill').style.height = kp + '%';
+      k.querySelector('.pc').textContent = kp + '%';
+      k.querySelector('.lvl').textContent = `${fmtK(s.krushqit.value)} / ${fmtK(s.krushqit.goal)}`;
+      k.classList.toggle('on', Date.now() < s.krushqit.until - s.now + Date.now() && s.krushqit.until > s.now);
+    }
   }
 
   // ---------- ticker ----------
@@ -168,6 +172,7 @@
   function hints() {
     if (!state) return [];
     const g = state.config.gifts.map(x => ({ icon: x.icon, image: x.image, html: `${esc(x.gift)} = <span class="name">${esc(x.label)}</span>` }));
+    if (texts.krushqitHint) g.push({ icon: '🎺', html: `<span class="name">${esc(texts.krushqitHint)}</span>` });
     if (state.config.likesToJoin) {
       const dance = state.config.gifts.find(x => x.role === 'dancer');
       g.splice(2, 0, { icon: '❤️', html: `${esc(texts.likesCard)} = <span class="name">${esc(dance ? dance.label : '')}</span>` });
@@ -233,6 +238,26 @@
     }, a.duration || 2600);
   }
 
+  // ---------- KRUSHQIT event ----------
+  let krushqitRunning = false;
+  function startKrushqit(ev, elapsed, announce) {
+    krushqitRunning = true;
+    const seconds = ev.seconds || 20;
+    const cfg = state?.config || {};
+    Scene.krushqit(ev.people || [], seconds, elapsed, { bpm: ev.bpm, firstBeat: ev.firstBeat, songStart: ev.songStart });
+    if (ev.song || cfg.krushqit) {
+      const song = ev.song || '/sfx/krushqit.mp3';
+      Sfx.playEvent(song, (ev.songStart ?? 1.5) + elapsed, seconds - elapsed);
+    }
+    if (announce) {
+      // shown right away (not queued): it has to match the music and the procession
+      alertQueue.unshift({ title: ev.title, sub: ev.sub, icon: '🎺', duration: 2800,
+        onShow() { Scene.confetti(160); Scene.hearts(561, 860, 16, 80); } });
+      nextAlert();
+    }
+    setTimeout(() => { krushqitRunning = false; }, (seconds - elapsed) * 1000);
+  }
+
   // ---------- socket ----------
   const socket = io();
   const OVERLAY_VERSION = '2026-10-09b'; // keep in sync with CLIENT_VERSION in server/index.js
@@ -245,7 +270,13 @@
     $('titleText').textContent = texts.title;
     $('boardTitle').textContent = texts.leaderboardTitle;
     $('qejfTitle').textContent = texts.qejf;
-    $('cakeTitle').textContent = texts.cake;
+    if (texts.krushqitTitle) $('kTitle').textContent = texts.krushqitTitle;
+    if (texts.krushqitGoal) $('kGoal').textContent = texts.krushqitGoal;
+    // overlay (re)loaded in the middle of a krushqit event: join it where it is
+    if (s.krushqit && s.krushqit.until > s.now + 1500 && !krushqitRunning) {
+      const left = (s.krushqit.until - s.now) / 1000;
+      startKrushqit({ people: s.krushqit.people, seconds: s.krushqit.seconds }, s.krushqit.seconds - left, false);
+    }
     renderLegend(s.config);
 
     renderBoard(s.leaderboard);
@@ -320,6 +351,9 @@
             else Scene.confetti(40);
           },
         });
+        break;
+      case 'krushqit':
+        startKrushqit(ev, 0, true);
         break;
       case 'toast':
         queueAlert({

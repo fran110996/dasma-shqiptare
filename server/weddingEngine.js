@@ -80,6 +80,34 @@ class WeddingEngine {
   // Per-viewer like counters, restarted on every new connection / reset
   resetLikeGoal() {
     this.likesByUser = new Map(); // userId -> likes sent during this LIVE
+    this.liveLikes = 0;           // the LIVE's total likes (what viewers see on TikTok)
+    this.krushqitMark = null;     // 50K milestones already celebrated
+    this.krushqitUntil = 0;
+    this.krushqitPeople = [];
+  }
+
+  krushqitProgress() {
+    const goal = config.krushqit.likes;
+    const done = (this.krushqitMark || 0) * goal;
+    return { value: Math.max(0, Math.min(goal, this.liveLikes - done)), goal,
+      until: this.krushqitUntil, people: this.krushqitPeople, seconds: config.krushqit.seconds };
+  }
+
+  // The procession: top likers first, then the most generous, then anyone recently seen
+  triggerKrushqit(reason) {
+    const k = config.krushqit;
+    if (Date.now() < this.krushqitUntil) { this.log('🎺 Krushqit already on stage, skipped'); return; }
+    const ids = [];
+    const add = id => { if (id && !ids.includes(id) && this.users.has(id)) ids.push(id); };
+    [...this.likesByUser.entries()].sort((a, b) => b[1] - a[1]).forEach(([id]) => add(id));
+    this.leaderboard(20).forEach(u => add(u.userId));
+    [...this.users.keys()].reverse().forEach(add);
+    this.krushqitPeople = ids.slice(0, k.maxPeople).map(id => this.publicUser(this.users.get(id)));
+    this.krushqitUntil = Date.now() + k.seconds * 1000;
+    this.log(`🎺 KRUSHQIT (${reason}) → ${this.krushqitPeople.map(p => p.name).join(', ') || 'no viewers yet'}`);
+    this.fx('krushqit', { people: this.krushqitPeople, seconds: k.seconds, title: config.texts.krushqitComing,
+      sub: config.texts.krushqitWelcome, song: k.song, songStart: k.songStart, bpm: k.bpm, firstBeat: k.firstBeat });
+    this.broadcast(true);
   }
 
   topLikers(n = 3) {
@@ -207,6 +235,17 @@ class WeddingEngine {
     const count = data.likeCount || 1;
     this.stats.likes += count;
     this.addQejf(count * config.qejfPerLike);
+    // KRUSHQIT: every 50K likes of the LIVE's total
+    const K = config.krushqit.likes;
+    const liveTotal = data.totalLikeCount > 0 ? data.totalLikeCount : this.liveLikes + count;
+    if (this.krushqitMark == null) this.krushqitMark = Math.floor(liveTotal / K); // likes before we connected don't trigger it
+    this.liveLikes = Math.max(this.liveLikes, liveTotal);
+    const kMark = Math.floor(this.liveLikes / K);
+    if (kMark > this.krushqitMark) {
+      this.krushqitMark = kMark;
+      this.triggerKrushqit(`${kMark * K / 1000}K likes`);
+    }
+
     // Per-viewer like counter: reaching N likes puts this viewer in the dance (once)
     const N = config.likesToJoin;
     const before = this.likesByUser.get(u.userId) || 0;
@@ -320,9 +359,9 @@ class WeddingEngine {
       this.addDancer(u.userId);
     }
 
-    // Cake meter
-    this.cake.coins += total;
-    while (this.cake.coins >= this.cake.goal) {
+    // Cake meter (disabled when the KRUSHQIT meter replaces it)
+    if (config.cakeEnabled !== false) this.cake.coins += total;
+    while (config.cakeEnabled !== false && this.cake.coins >= this.cake.goal) {
       this.cake.coins -= this.cake.goal;
       this.cake.level += 1;
       this.cake.goal = Math.round(this.cake.goal * config.cakeGoalGrowth / 100) * 100;
@@ -394,6 +433,7 @@ class WeddingEngine {
       kumbari,
       leaderboard: this.leaderboard(5).map(u => this.publicUser(u)),
       cake: this.cake,
+      krushqit: this.krushqitProgress(),
       qejf: { value: this.qejf, label: config.texts.qejfLevels[qejfLevel], party: Date.now() < this.partyUntil },
       stats: this.stats,
       topLikers: this.topLikers(),

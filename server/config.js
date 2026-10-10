@@ -11,13 +11,27 @@ module.exports = {
   gifts: [
     { key: 'tupan',    gift: 'Rose',        aliases: ['Flower'],               coins: 1,   label: 'Tupan',             icon: '🌹', role: 'drummer' },
     { key: 'valle',    gift: 'Rosa',        aliases: [],                       coins: 10,  label: 'Futesh në valle',   icon: '💐', role: 'dancer' },
-    { key: 'shoqja',   gift: 'Paper Crane', aliases: [],                       coins: 99,  label: 'Shoqja e nuses',    icon: '🕊️', role: 'bridesmaid' },
     { key: 'bakshish', gift: 'Confetti',    aliases: [],                       coins: 100, label: 'Bakshish',          icon: '🎉', role: 'money' },
-    { key: 'shok',     gift: 'Hearts',      aliases: [],                       coins: 199, label: 'Shoku i dhëndrrit', icon: '💕', role: 'bestman' },
     { key: 'dolli',    gift: 'Semsemia',    aliases: ['Sem Sem', 'Semsem'],    coins: 200, label: 'Dolli për çiftin',  icon: '🪕', role: 'toast' },
     { key: 'nusja',    gift: 'Pink Cowboy', aliases: ['Cowboy'],               coins: 450, label: 'Nusja',             icon: '🤠', role: 'bride' },
     { key: 'dhendri',  gift: 'Train',       aliases: [],                       coins: 899, label: 'Dhëndri',           icon: '🚂', role: 'groom' },
   ],
+
+  // KRUSHQIT event (10 Oct): every 50K likes in the LIVE (TikTok's total, the number viewers see)
+  // the groom's wedding procession arrives for ~20s, led by the flag bearer, with its own song.
+  // The krushqit are the viewers who sent the most likes (with their profile pictures).
+  krushqit: {
+    likes: 50000,
+    seconds: 20,
+    song: '/sfx/krushqit.mp3',
+    songStart: 1.5,      // skip the quiet intro
+    bpm: 156.6,          // measured from the song, the dancers step on its beat
+    firstBeat: 0.279,    // seconds into the song file
+    maxPeople: 10,
+  },
+
+  // The cake meter was replaced by the KRUSHQIT likes meter
+  cakeEnabled: false,
 
   // A viewer who sends this many likes (counted per viewer during the LIVE) joins the dance
   likesToJoin: 1000,
@@ -78,6 +92,11 @@ module.exports = {
     toastSub: 'Gëzuar! 🥂',
     cheers: 'Gëzuar! 🥂',
     newDrummer: 'TUPANXHIU!',
+    krushqitTitle: 'KRUSHQIT',
+    krushqitGoal: '50K LIKES',
+    krushqitComing: 'KRUSHQIT PO VIJNË!',
+    krushqitWelcome: 'Mirë se erdhët, krushq!',
+    krushqitHint: '50K Like = vijnë KRUSHQIT!',
     couple: 'U trashëgofshin! 💍',
     jumpHint: 'Shkruaj HOP në chat për të kërcyer!',
     kumbariHint: 'KUMBARI = më bujari, prin vallen 👑',

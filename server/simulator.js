@@ -73,8 +73,8 @@ class Simulator extends EventEmitter {
     else {
       // Weighted gifts: cheap ones are much more common
       const g = Math.random();
-      const key = g < 0.38 ? 'tupan' : g < 0.68 ? 'valle' : g < 0.76 ? 'bakshish' : g < 0.82 ? 'shoqja'
-        : g < 0.88 ? 'shok' : g < 0.92 ? 'dolli' : g < 0.97 ? 'nusja' : 'dhendri';
+      const key = g < 0.42 ? 'tupan' : g < 0.74 ? 'valle' : g < 0.84 ? 'bakshish'
+        : g < 0.90 ? 'dolli' : g < 0.96 ? 'nusja' : 'dhendri';
       this.gift(key, key === 'tupan' ? 1 + Math.floor(Math.random() * 5) : 1);
     }
   }
@@ -104,8 +104,8 @@ class Simulator extends EventEmitter {
       [7200, g('tupan', 3, 5)],
       [8600, c('HOP 🕺', 8)], [9000, c('hopaaa', 10)], [9400, c('Opa opa!', 14)],
       [10500, g('bakshish', 4, 2)],
-      [13500, g('shok', 20)],
-      [16500, g('shoqja', 13)],
+      [13500, g('valle', 21)],
+      [16500, g('valle', 13)],
       [19500, g('nusja', 1)],
       [21500, () => this.share()], [22000, c('U trashëgofshin! ❤️', 9)],
       [23500, g('dhendri', 0)],
@@ -114,16 +114,18 @@ class Simulator extends EventEmitter {
       [31000, g('tupan', 3, 10)],
       [32000, () => this.like(config.likesToJoin, 30)],
       [32500, g('bakshish', 4, 3)],
-      [34500, g('shok', 5)],
-      [37000, g('shoqja', 15)],
+      [34500, g('valle', 5)],
+      [37000, g('valle', 15)],
       [40000, g('nusja', 1, 3)],
       [44000, g('dolli', 12)],
       [53000, c('Gëzuar! 🔥', 23)], [53500, c('HOP', 18)],
+      // the LIVE reaches 50K likes → KRUSHQIT
+      [56000, () => this.emit('like', { ...this.user(30), likeCount: 200, totalLikeCount: 50200 })],
     ];
     this.start(1.4, true); // ambient chat & likes (start() clears timers, so it goes first)
     this.showTimers = steps.map(([t, fn]) => setTimeout(fn, t));
-    this.showTimers.push(setTimeout(() => this.stop(), 56000));
-    return 56000;
+    this.showTimers.push(setTimeout(() => this.stop(), 78000));
+    return 78000;
   }
 
   join() { this.emit('join', this.user()); }
