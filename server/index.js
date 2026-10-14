@@ -23,7 +23,9 @@ const WeddingEngine = require('./weddingEngine');
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: '*' } });
+// long ping timeout: LIVE Studio can pause the page for a few seconds and that must not drop it
+// compressed messages: the game state is sent several times per second and Render bills bandwidth
+const io = new Server(server, { cors: { origin: '*' }, pingInterval: 20000, pingTimeout: 60000, perMessageDeflate: { threshold: 512 } });
 
 app.use(express.json());
 
@@ -38,11 +40,15 @@ app.use('/api', (req, res, next) => {
 // Overlay code must never be cached (LIVE Studio / OBS would keep running an old version)
 const noCache = res => res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
 app.use(express.static(path.join(__dirname, '../public'), {
-  setHeaders: (res, file) => { if (/\.(html|js|css)$/.test(file)) noCache(res); },
+  setHeaders: (res, file) => {
+    if (/\.(html|js|css)$/.test(file)) noCache(res);
+    // songs never change: let LIVE Studio keep them instead of downloading them again every loop
+    else if (/\.mp3$/.test(file)) res.setHeader('Cache-Control', 'public, max-age=2592000');
+  },
 }));
 
 // Bump together with OVERLAY_VERSION in public/js/overlay.js to spot overlays running old code
-const CLIENT_VERSION = '2026-10-09b';
+const CLIENT_VERSION = '2026-10-11a';
 
 const tiktok = new TikTokConnector();
 const sim = new Simulator();
@@ -302,10 +308,10 @@ io.on('connection', socket => {
     pendingMusic = null;
     pushStatus();
   });
-  socket.on('disconnect', () => {
+  socket.on('disconnect', reason => {
     if (!socket.data.overlay) return;
     overlays--;
-    game.log(`📺 Overlay closed (${overlays} open)`);
+    game.log(`📺 Overlay closed (${overlays} open) · ${reason}`);
     pushStatus();
   });
   socket.on('music:ack', a => {

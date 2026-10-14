@@ -263,8 +263,22 @@
 
   // ---------- socket ----------
   const socket = io();
-  const OVERLAY_VERSION = '2026-10-09b'; // keep in sync with CLIENT_VERSION in server/index.js
+  const OVERLAY_VERSION = '2026-10-11a'; // keep in sync with CLIENT_VERSION in server/index.js
   socket.on('connect', () => socket.emit('hello', { role: params.get('sound') === '0' ? 'preview' : 'overlay', v: OVERLAY_VERSION }));
+
+  // self-heal: if the connection to the server stays down, force a reconnect and then reload the page,
+  // so the game never stays frozen in LIVE Studio without anyone noticing
+  let downSince = 0;
+  setInterval(() => {
+    if (socket.connected) { downSince = 0; return; }
+    if (!downSince) { downSince = Date.now(); return; }
+    const down = Date.now() - downSince;
+    if (down > 8000 && !socket.active) socket.connect();
+    // only reload when the server answers, otherwise LIVE Studio would be left on an error page
+    if (down > 25000) fetch('/overlay', { method: 'HEAD', cache: 'no-store' }).then(r => { if (r.ok) location.reload(); }).catch(() => {});
+  }, 3000);
+  // the page was paused (e.g. LIVE Studio in the background): check the connection as soon as it comes back
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && !socket.connected) socket.connect(); });
 
   socket.on('state', s => {
     const hadDrummer = !!state?.drummer;

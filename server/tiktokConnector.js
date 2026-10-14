@@ -54,7 +54,7 @@ class TikTokConnector extends EventEmitter {
   async connect(tiktokUsername, sessionId = null) {
     if (this.connection) await this.disconnect();
 
-    this.creatorUsername = tiktokUsername.replace(/^@/, '');
+    this.creatorUsername = tiktokUsername.trim().replace(/^@/, '').toLowerCase();
     this.streaks.clear();
 
     this.connection = new TikTokLiveConnection(this.creatorUsername, {

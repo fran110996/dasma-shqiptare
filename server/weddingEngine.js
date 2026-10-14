@@ -441,7 +441,7 @@ class WeddingEngine {
     };
   }
 
-  // Throttled state push (max ~7/s)
+  // Throttled state push (max ~2.5/s, it is sent to every open screen)
   broadcast(immediate = false) {
     if (immediate) {
       clearTimeout(this.broadcastTimer);
@@ -453,7 +453,7 @@ class WeddingEngine {
     this.broadcastTimer = setTimeout(() => {
       this.broadcastTimer = null;
       this.io.emit('state', this.snapshot());
-    }, 150);
+    }, 400);
   }
 }
 

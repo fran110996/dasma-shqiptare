@@ -16,6 +16,8 @@
   .pill { padding: 4px 14px; border-radius: 20px; font-weight: 800; font-size: 14px; background: #3a1418; color: var(--muted); }
   .pill.on { background: rgba(60,207,122,.15); color: var(--ok); }
   .pill.sim { background: rgba(246,197,68,.15); color: var(--gold); }
+  .pill.bad { background: #c4141b; color: #fff; animation: blink 1s infinite; }
+  @keyframes blink { 50% { opacity: .55; } }
   main { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 22px; padding: 22px 28px; max-width: 1400px; }
   @media (max-width: 1000px) { main { grid-template-columns: 1fr; } }
   section { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 18px 20px; margin-bottom: 18px; }
@@ -186,8 +188,10 @@
     $('liveStatus').classList.toggle('on', s.connected);
     if (s.connected) $('err').textContent = '';
     $('simStatus').hidden = !s.simulating;
-    $('obsStatus').textContent = s.overlays ? `📺 Overlay open${s.overlays > 1 ? ' ×' + s.overlays : ''}` : '📺 Overlay: not open';
+    $('obsStatus').textContent = s.overlays ? `📺 Overlay open${s.overlays > 1 ? ' ×' + s.overlays : ''}`
+      : s.connected ? '⚠️ Game not open in LIVE Studio: remove the source and add it again' : '📺 Overlay: not open';
     $('obsStatus').classList.toggle('on', s.overlays > 0);
+    $('obsStatus').classList.toggle('bad', !s.overlays && s.connected);
     $('simStatus').classList.add('sim');
     $('simBtn').textContent = s.simulating ? '■ Stop auto demo' : '▶ Start auto demo';
   });
