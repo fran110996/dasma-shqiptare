@@ -79,8 +79,9 @@ class WeddingEngine {
 
   // Per-viewer like counters, restarted on every new connection / reset
   resetLikeGoal() {
-    this.likesByUser = new Map(); // userId -> likes sent during this LIVE
+    this.likesByUser = new Map(); // userId -> estimated likes sent during this LIVE (taps TikTok dropped included)
     this.liveLikes = 0;           // the LIVE's total likes (what viewers see on TikTok)
+    this.likeWindow = [];         // [time, counted, tiktokDelta] of the last minute, to measure coverage
     this.krushqitMark = null;     // 50K milestones already celebrated
     this.krushqitUntil = 0;
     this.krushqitPeople = [];
@@ -110,9 +111,20 @@ class WeddingEngine {
     this.broadcast(true);
   }
 
+  // Share of the LIVE's likes that actually reach us (TikTok drops taps when the LIVE is busy).
+  // Measured over the last minute against TikTok's own total; 0.7 until there is enough data.
+  likeCoverage() {
+    const now = Date.now();
+    while (this.likeWindow.length && now - this.likeWindow[0][0] > 60000) this.likeWindow.shift();
+    let counted = 0, tiktok = 0;
+    for (const [, c, d] of this.likeWindow) { counted += c; tiktok += d; }
+    if (tiktok < 300) return 0.7;
+    return Math.min(1, Math.max(0.2, counted / tiktok));
+  }
+
   topLikers(n = 3) {
     return [...this.likesByUser.entries()].sort((a, b) => b[1] - a[1]).slice(0, n)
-      .map(([id, likes]) => ({ name: this.users.get(id)?.nickname || id, likes }));
+      .map(([id, likes]) => ({ name: this.users.get(id)?.nickname || id, likes: Math.round(likes) }));
   }
 
   // ---------------------------------------------------------
@@ -239,6 +251,8 @@ class WeddingEngine {
     const K = config.krushqit.likes;
     const liveTotal = data.totalLikeCount > 0 ? data.totalLikeCount : this.liveLikes + count;
     if (this.krushqitMark == null) this.krushqitMark = Math.floor(liveTotal / K); // likes before we connected don't trigger it
+    const delta = this.liveLikes > 0 && data.totalLikeCount > 0 ? Math.max(0, liveTotal - this.liveLikes) : count;
+    this.likeWindow.push([Date.now(), count, Math.max(delta, count)]);
     this.liveLikes = Math.max(this.liveLikes, liveTotal);
     const kMark = Math.floor(this.liveLikes / K);
     if (kMark > this.krushqitMark) {
@@ -246,17 +260,18 @@ class WeddingEngine {
       this.triggerKrushqit(`${kMark * K / 1000}K likes`);
     }
 
-    // Per-viewer like counter: reaching N likes puts this viewer in the dance (once)
+    // Per-viewer like counter: every N likes puts this viewer in the dance (again, if they were pushed out)
     const N = config.likesToJoin;
     const before = this.likesByUser.get(u.userId) || 0;
-    const after = before + count;
+    const after = before + count / this.likeCoverage();
     this.likesByUser.set(u.userId, after);
-    if (before < N && after >= N) {
+    if (Math.floor(after / N) > Math.floor(before / N)) {
+      const pct = Math.round(this.likeCoverage() * 100);
       if (this.isInScene(u.userId)) {
-        this.log(`❤️ ${u.nickname} reached ${N} counted likes (already in the wedding)`);
+        this.log(`❤️ ${u.nickname} reached ~${Math.round(after)} likes (already in the wedding)`);
       } else {
         this.addDancer(u.userId);
-        this.log(`❤️ ${u.nickname} reached ${N} counted likes → Futesh në valle`);
+        this.log(`❤️ ${u.nickname} reached ~${Math.round(after)} likes (TikTok delivering ${pct}%) → Futesh në valle`);
         this.fx('dancer', { user: this.publicUser(u), added: true, viaLikes: true, text: fmt(config.texts.likesJoined, { name: u.nickname }) });
       }
     }

@@ -33,10 +33,11 @@ module.exports = {
   // The cake meter was replaced by the KRUSHQIT likes meter
   cakeEnabled: false,
 
-  // Likes a viewer needs to join the dance, as COUNTED by the game. On screen it says "1000 Like":
-  // TikTok's app drops taps when someone taps non-stop (the client reported ~1.4K taps for 1000
-  // counted), so 700 counted ≈ 1000 taps. Check "TikTok total" vs "counted" in the minute logs.
-  likesToJoin: 700,
+  // Likes a viewer needs to join the dance. On screen it says "1000 Like".
+  // TikTok only delivers part of the taps (24%-85% in real lives, less when the LIVE is busy), so the
+  // game scales each viewer's likes by the share it is receiving right now (see likeCoverage).
+  // A bit under 1000 because heavy tappers lose more taps than average.
+  likesToJoin: 800,
 
   // Gift legend: cards shown at once (it rotates pages so text stays readable on phones)
   legendPerPage: 3,
