@@ -64,9 +64,9 @@
   let legendKey = '', legendCards = [], legendPage = 0, legendTimer = null, perPage = 3, pageMs = 5000;
   function cardHtml(g) {
     const icon = g.image ? `<img src="${esc(g.image)}" referrerpolicy="no-referrer" onerror="this.replaceWith(document.createTextNode('${g.icon}'))">` : g.icon;
-    const price = g.coins != null ? ` <b>${g.coins}<i class="coin"></i></b>` : '';
+    // no coin prices on screen: TikTok flags price lists as gift solicitation
     return `<div class="gcard" data-key="${g.key}"><div class="gi">${icon}</div>
-      <div class="gt"><div class="gl">${esc(g.label)}</div><div class="gn">${esc(g.gift)}${price}</div></div></div>`;
+      <div class="gt"><div class="gl">${esc(g.label)}</div><div class="gn">${esc(g.gift)}</div></div></div>`;
   }
   function paintLikes() {}
   function showLegendPage(page, animate = true) {
@@ -138,8 +138,7 @@
       el.innerHTML = `
         <div class="rk">${first ? '👑' : i + 1}</div>
         ${u.avatar ? imgTag(u.avatar) : `<div class="ph"></div>`}
-        <div class="nm">${first ? `<small>${esc(texts.kumbari || 'KUMBARI')}</small>` : ''}${esc(u.name)}</div>
-        <div class="cs">${u.coins.toLocaleString()} <i class="coin"></i></div>`;
+        <div class="nm">${first ? `<small>${esc(texts.kumbari || 'KUMBARI')}</small>` : ''}${esc(u.name)}</div>`;
       el.style.top = top + 'px';
       top += first ? 62 : 49;
       if (prevCoins.has(u.id) && prevCoins.get(u.id) !== u.coins) {
@@ -263,7 +262,7 @@
 
   // ---------- socket ----------
   const socket = io();
-  const OVERLAY_VERSION = '2026-10-11a'; // keep in sync with CLIENT_VERSION in server/index.js
+  const OVERLAY_VERSION = '2026-10-20a'; // keep in sync with CLIENT_VERSION in server/index.js
   socket.on('connect', () => socket.emit('hello', { role: params.get('sound') === '0' ? 'preview' : 'overlay', v: OVERLAY_VERSION }));
 
   // self-heal: if the connection to the server stays down, force a reconnect and then reload the page,
