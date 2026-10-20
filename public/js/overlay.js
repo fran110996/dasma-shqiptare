@@ -83,6 +83,8 @@
     legendTimer = setInterval(() => showLegendPage(legendPage + 1), pageMs);
   }
   function renderLegend(cfg) {
+    $('legend').hidden = !cfg.showGiftMenu;
+    if (!cfg.showGiftMenu) { clearInterval(legendTimer); legendCards = []; legendKey = ''; return; }
     const cards = [...cfg.gifts];
     if (cfg.likesToJoin) {
       const dance = cfg.gifts.find(g => g.role === 'dancer');
@@ -173,13 +175,14 @@
   let tickerBusyUntil = 0, hintIndex = 0;
   function hints() {
     if (!state) return [];
-    const g = state.config.gifts.map(x => ({ icon: x.icon, image: x.image, html: `${esc(x.gift)} = <span class="name">${esc(x.label)}</span>` }));
+    const menu = state.config.showGiftMenu;
+    const g = menu ? state.config.gifts.map(x => ({ icon: x.icon, image: x.image, html: `${esc(x.gift)} = <span class="name">${esc(x.label)}</span>` })) : [];
     if (texts.krushqitHint) g.push({ icon: '🎺', html: `<span class="name">${esc(texts.krushqitHint)}</span>` });
     if (state.config.likesToJoin) {
       const dance = state.config.gifts.find(x => x.role === 'dancer');
-      g.splice(2, 0, { icon: '❤️', html: `${esc(texts.likesCard)} = <span class="name">${esc(dance ? dance.label : '')}</span>` });
+      g.splice(menu ? 2 : 0, 0, { icon: '❤️', html: `${esc(texts.likesCard)} = <span class="name">${esc(dance ? dance.label : '')}</span>` });
     }
-    return [...g, { icon: '👑', html: esc(texts.kumbariHint) }, { icon: '💬', html: esc(texts.jumpHint) }];
+    return [...g, ...(menu ? [{ icon: '👑', html: esc(texts.kumbariHint) }] : []), { icon: '💬', html: esc(texts.jumpHint) }];
   }
   function showTicker(item) {
     const icon = item.avatar ? imgTag(item.avatar, 'av') : item.image ? imgTag(item.image, 'av emoji') : `<span class="av emoji">${item.icon || '💍'}</span>`;
@@ -262,7 +265,7 @@
 
   // ---------- socket ----------
   const socket = io();
-  const OVERLAY_VERSION = '2026-10-20a'; // keep in sync with CLIENT_VERSION in server/index.js
+  const OVERLAY_VERSION = '2026-10-20b'; // keep in sync with CLIENT_VERSION in server/index.js
   socket.on('connect', () => socket.emit('hello', { role: params.get('sound') === '0' ? 'preview' : 'overlay', v: OVERLAY_VERSION }));
 
   // self-heal: if the connection to the server stays down, force a reconnect and then reload the page,

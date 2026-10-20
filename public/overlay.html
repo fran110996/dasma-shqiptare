@@ -80,6 +80,7 @@
   /* a few big cards at a time (pages rotate) so they stay readable on a phone */
   #legend { left: 16px; top: 366px; width: 1048px; height: 118px; display: flex; gap: 10px; transition: opacity .35s; }
   #legend.fade { opacity: 0; }
+  #legend[hidden] { display: none; }
   .gcard {
     flex: 1; min-width: 0; height: 118px; border-radius: 20px; padding: 8px 14px 8px 10px;
     background: linear-gradient(180deg, rgba(70,8,12,.92), rgba(25,3,5,.92));

@@ -1236,10 +1236,11 @@ const Scene = (() => {
       c.setLineDash([6, 5]); c.lineWidth = 3; c.strokeStyle = GHOST_COLOR;
       c.beginPath(); c.arc(0, headY, R, 0, TAU); c.stroke(); c.setLineDash([]);
       c.globalAlpha = 0.85;
-      const g = state?.config.gifts.find(x => x.key === GHOST_INFO[kind]);
+      // with the gift menu off, the empty spots don't say which gift fills them
+      const g = state?.config.showGiftMenu ? state.config.gifts.find(x => x.key === GHOST_INFO[kind]) : null;
       c.font = `${R * 1.15}px ${FONT}`; c.textAlign = 'center'; c.textBaseline = 'middle';
       c.fillStyle = '#fff';
-      c.fillText(g ? g.icon : '?', 0, headY + 2);
+      if (g) c.fillText(g.icon, 0, headY + 2);
       if (g && !it.noLabel) {
         c.globalAlpha = 0.95;
         c.font = `800 18px ${FONT}`;

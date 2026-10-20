@@ -42,6 +42,9 @@ module.exports = {
   // Gift legend: cards shown at once (it rotates pages so text stays readable on phones)
   legendPerPage: 3,
   legendPageSeconds: 5,
+  // false = no gift list on screen, no gift hints in the ticker, no gift names on the empty stage spots
+  // (TikTok restricted the LIVE for "inorganic gift solicitation"). Gifts keep working the same.
+  showGiftMenu: false,
 
   // Any gift worth at least this many coins also puts the sender in the dance
   joinDanceMinCoins: 10,
