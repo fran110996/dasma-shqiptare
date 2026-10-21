@@ -437,7 +437,7 @@ class WeddingEngine {
         likesToJoin: config.likesToJoin,
         legendPerPage: config.legendPerPage,
         legendPageSeconds: config.legendPageSeconds,
-        showGiftMenu: config.showGiftMenu !== false,
+        giftMenu: config.giftMenu ?? 'gifts',
       },
       dancers: dancers.map(get),
       bride: get(this.bride),

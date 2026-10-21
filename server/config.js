@@ -9,12 +9,12 @@ module.exports = {
   // value (±1), and otherwise falls back to the highest tier whose coins <= value.
   // Check the server logs during a LIVE: every gift is printed with its real name and coins.
   gifts: [
-    { key: 'tupan',    gift: 'Rose',        aliases: ['Flower'],               coins: 1,   label: 'Tupan',             icon: '🌹', role: 'drummer' },
-    { key: 'valle',    gift: 'Rosa',        aliases: [],                       coins: 10,  label: 'Futesh në valle',   icon: '💐', role: 'dancer' },
-    { key: 'bakshish', gift: 'Confetti',    aliases: [],                       coins: 100, label: 'Bakshish',          icon: '🎉', role: 'money' },
-    { key: 'dolli',    gift: 'Semsemia',    aliases: ['Sem Sem', 'Semsem'],    coins: 200, label: 'Dolli për çiftin',  icon: '🪕', role: 'toast' },
-    { key: 'nusja',    gift: 'Pink Cowboy', aliases: ['Cowboy'],               coins: 450, label: 'Nusja',             icon: '🤠', role: 'bride' },
-    { key: 'dhendri',  gift: 'Train',       aliases: [],                       coins: 899, label: 'Dhëndri',           icon: '🚂', role: 'groom' },
+    { key: 'tupan',    gift: 'Rose',        aliases: ['Flower'],               coins: 1,   label: 'Tupan',             icon: '🌹', role: 'drummer', actionIcon: '🥁' },
+    { key: 'valle',    gift: 'Rosa',        aliases: [],                       coins: 10,  label: 'Futesh në valle',   icon: '💐', role: 'dancer', actionIcon: '💃' },
+    { key: 'bakshish', gift: 'Confetti',    aliases: [],                       coins: 100, label: 'Bakshish',          icon: '🎉', role: 'money', actionIcon: '💸' },
+    { key: 'dolli',    gift: 'Semsemia',    aliases: ['Sem Sem', 'Semsem'],    coins: 200, label: 'Dolli për çiftin',  icon: '🪕', role: 'toast', actionIcon: '🥂' },
+    { key: 'nusja',    gift: 'Pink Cowboy', aliases: ['Cowboy'],               coins: 450, label: 'Nusja',             icon: '🤠', role: 'bride', actionIcon: '👰' },
+    { key: 'dhendri',  gift: 'Train',       aliases: [],                       coins: 899, label: 'Dhëndri',           icon: '🚂', role: 'groom', actionIcon: '🤵' },
   ],
 
   // KRUSHQIT event (10 Oct): every 50K likes in the LIVE (TikTok's total, the number viewers see)
@@ -42,9 +42,12 @@ module.exports = {
   // Gift legend: cards shown at once (it rotates pages so text stays readable on phones)
   legendPerPage: 3,
   legendPageSeconds: 5,
-  // false = no gift list on screen, no gift hints in the ticker, no gift names on the empty stage spots
-  // (TikTok restricted the LIVE for "inorganic gift solicitation"). Gifts keep working the same.
-  showGiftMenu: false,
+  // What the screen says about gifts (TikTok restricted the LIVE for "gift baiting"):
+  //   'points' = "450 pikë = Nusja": points instead of gift names and coins (1 coin = 1 pikë)
+  //   'gifts'  = "Pink Cowboy = Nusja" with the gift icons
+  //   false    = nothing about gifts on screen
+  // Gifts keep working the same in every mode.
+  giftMenu: 'points',
 
   // Any gift worth at least this many coins also puts the sender in the dance
   joinDanceMinCoins: 10,
@@ -107,5 +110,6 @@ module.exports = {
     jumpHint: 'Shkruaj HOP në chat për të kërcyer!',
     kumbariHint: 'KUMBARI = më bujari, prin vallen 👑',
     giftHint: '{gift} = {label}',
+    points: 'pikë',
   },
 };

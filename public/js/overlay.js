@@ -83,9 +83,9 @@
     legendTimer = setInterval(() => showLegendPage(legendPage + 1), pageMs);
   }
   function renderLegend(cfg) {
-    $('legend').hidden = !cfg.showGiftMenu;
-    if (!cfg.showGiftMenu) { clearInterval(legendTimer); legendCards = []; legendKey = ''; return; }
-    const cards = [...cfg.gifts];
+    $('legend').hidden = !cfg.giftMenu;
+    if (!cfg.giftMenu) { clearInterval(legendTimer); legendCards = []; legendKey = ''; return; }
+    const cards = cfg.gifts.map(g => cfg.giftMenu === 'points' ? menuItem(g, cfg.texts) : g);
     if (cfg.likesToJoin) {
       const dance = cfg.gifts.find(g => g.role === 'dancer');
       cards.splice(2, 0, { key: 'likes', icon: '❤️', gift: cfg.texts.likesCard || `${cfg.likesToJoin} Like`, coins: null, label: dance ? dance.label : 'Valle' });
@@ -140,7 +140,8 @@
       el.innerHTML = `
         <div class="rk">${first ? '👑' : i + 1}</div>
         ${u.avatar ? imgTag(u.avatar) : `<div class="ph"></div>`}
-        <div class="nm">${first ? `<small>${esc(texts.kumbari || 'KUMBARI')}</small>` : ''}${esc(u.name)}</div>`;
+        <div class="nm">${first ? `<small>${esc(texts.kumbari || 'KUMBARI')}</small>` : ''}${esc(u.name)}</div>
+        ${state?.config.giftMenu === 'points' ? `<div class="cs">${u.coins.toLocaleString()} <small>${esc(texts.points || 'pikë')}</small></div>` : ''}`;
       el.style.top = top + 'px';
       top += first ? 62 : 49;
       if (prevCoins.has(u.id) && prevCoins.get(u.id) !== u.coins) {
@@ -173,10 +174,15 @@
   const ticker = $('ticker');
   const tickerQueue = [];
   let tickerBusyUntil = 0, hintIndex = 0;
+  // points mode: the action's icon and "450 pikë" instead of the gift's name, icon and coins
+  function menuItem(g, t) {
+    return { ...g, icon: g.actionIcon || g.icon, image: null, gift: `${g.coins} ${t.points || 'pikë'}` };
+  }
   function hints() {
     if (!state) return [];
-    const menu = state.config.showGiftMenu;
-    const g = menu ? state.config.gifts.map(x => ({ icon: x.icon, image: x.image, html: `${esc(x.gift)} = <span class="name">${esc(x.label)}</span>` })) : [];
+    const menu = state.config.giftMenu;
+    const g = menu ? state.config.gifts.map(x => menu === 'points' ? menuItem(x, texts) : x)
+      .map(x => ({ icon: x.icon, image: x.image, html: `${esc(x.gift)} = <span class="name">${esc(x.label)}</span>` })) : [];
     if (texts.krushqitHint) g.push({ icon: '🎺', html: `<span class="name">${esc(texts.krushqitHint)}</span>` });
     if (state.config.likesToJoin) {
       const dance = state.config.gifts.find(x => x.role === 'dancer');
@@ -265,7 +271,7 @@
 
   // ---------- socket ----------
   const socket = io();
-  const OVERLAY_VERSION = '2026-10-20b'; // keep in sync with CLIENT_VERSION in server/index.js
+  const OVERLAY_VERSION = '2026-10-21a'; // keep in sync with CLIENT_VERSION in server/index.js
   socket.on('connect', () => socket.emit('hello', { role: params.get('sound') === '0' ? 'preview' : 'overlay', v: OVERLAY_VERSION }));
 
   // self-heal: if the connection to the server stays down, force a reconnect and then reload the page,

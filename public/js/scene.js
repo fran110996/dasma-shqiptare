@@ -1237,14 +1237,16 @@ const Scene = (() => {
       c.beginPath(); c.arc(0, headY, R, 0, TAU); c.stroke(); c.setLineDash([]);
       c.globalAlpha = 0.85;
       // with the gift menu off, the empty spots don't say which gift fills them
-      const g = state?.config.showGiftMenu ? state.config.gifts.find(x => x.key === GHOST_INFO[kind]) : null;
+      const menu = state?.config.giftMenu;
+      const g = menu ? state.config.gifts.find(x => x.key === GHOST_INFO[kind]) : null;
+      const points = menu === 'points';
       c.font = `${R * 1.15}px ${FONT}`; c.textAlign = 'center'; c.textBaseline = 'middle';
       c.fillStyle = '#fff';
-      if (g) c.fillText(g.icon, 0, headY + 2);
+      if (g) c.fillText(points ? g.actionIcon || g.icon : g.icon, 0, headY + 2);
       if (g && !it.noLabel) {
         c.globalAlpha = 0.95;
         c.font = `800 18px ${FONT}`;
-        const label = `${g.gift}`, w = c.measureText(label).width + 18;
+        const label = points ? `${g.coins} ${state.config.texts.points || 'pikë'}` : `${g.gift}`, w = c.measureText(label).width + 18;
         c.fillStyle = 'rgba(10,2,3,.75)'; rrect(c, -w / 2, 10, w, 26, 13); c.fill();
         c.fillStyle = '#f6c544'; c.fillText(label, 0, 24);
       }
