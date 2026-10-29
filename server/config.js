@@ -48,6 +48,8 @@ module.exports = {
   //   false    = nothing about gifts on screen
   // Gifts keep working the same in every mode.
   giftMenu: 'points',
+  // the BUJARET E DASMES panel (top gifters). The kumbari still leads the valle when it's hidden.
+  showLeaderboard: false,
 
   // Any gift worth at least this many coins also puts the sender in the dance
   joinDanceMinCoins: 10,

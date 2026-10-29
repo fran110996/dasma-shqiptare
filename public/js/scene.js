@@ -1042,6 +1042,141 @@ const Scene = (() => {
     c.restore();
   }
 
+
+  // -----------------------------------------------------------
+  // DJ booth (back left) and kids dancing in front of the stage:
+  // decoration so the scene feels alive even with few viewers
+  // -----------------------------------------------------------
+  const DJ = { x: 262, y: 906 };
+  const PAL_DJ = { shirt: '#1d1d24', skin: '#efc6a0' };
+
+  function drawSpeaker(c, x, y, pulse) {
+    const w = 58, h = 128;
+    c.save(); c.translate(x, y);
+    c.fillStyle = 'rgba(0,0,0,.35)'; c.beginPath(); c.ellipse(0, 2, w * 0.62, 8, 0, 0, TAU); c.fill();
+    c.fillStyle = '#17171c'; rrect(c, -w / 2, -h, w, h, 6); c.fill();
+    c.strokeStyle = '#3a3a44'; c.lineWidth = 2; rrect(c, -w / 2, -h, w, h, 6); c.stroke();
+    for (const [cy, r] of [[-96, 13], [-42, 21]]) {
+      const rr = r * (1 + pulse * (r > 15 ? 0.12 : 0.06));
+      c.fillStyle = '#2a2a33'; c.beginPath(); c.arc(0, cy, r + 4, 0, TAU); c.fill();
+      c.fillStyle = '#0b0b0e'; c.beginPath(); c.arc(0, cy, rr, 0, TAU); c.fill();
+      c.fillStyle = '#4a4a56'; c.beginPath(); c.arc(0, cy, rr * 0.32, 0, TAU); c.fill();
+    }
+    c.restore();
+  }
+
+  function drawDJ(c, t, beat) {
+    const ph = beat % 1, pulse = Math.max(0, 1 - ph * 3);   // short kick on every beat
+    drawSpeaker(c, DJ.x - 116, DJ.y, pulse);
+    drawSpeaker(c, DJ.x + 116, DJ.y, pulse);
+    c.save(); c.translate(DJ.x, DJ.y);
+    // the DJ, behind the table: only from the waist up is visible
+    const bob = -Math.abs(Math.sin(beat * Math.PI)) * 5;
+    const scratch = Math.sin(t * 9) * 10;
+    c.save(); c.translate(0, -8); c.scale(0.95, 0.95);
+    c.fillStyle = PAL_DJ.shirt; rrect(c, -20, -132 + bob, 40, 70, 10); c.fill();
+    c.fillStyle = '#f6c544'; c.font = `800 13px ${FONT}`; c.textAlign = 'center'; c.textBaseline = 'middle';
+    c.fillText('DJ', 0, -108 + bob);
+    limb(c, -16, -124 + bob, -24, -170 + bob, 10, PAL_DJ.shirt, -6);           // hand on the headphones
+    c.fillStyle = PAL_DJ.skin; c.beginPath(); c.arc(-24, -170 + bob, 5, 0, TAU); c.fill();
+    limb(c, 16, -124 + bob, 34 + scratch, -66, 10, PAL_DJ.shirt, 8);           // scratching the record
+    c.fillStyle = PAL_DJ.skin; c.beginPath(); c.arc(34 + scratch, -66, 5, 0, TAU); c.fill();
+    c.fillRect(-5, -140 + bob, 10, 10);
+    const R = 26, hy = -166 + bob;
+    drawFace(c, hy, R, false);
+    c.fillStyle = '#111'; rrect(c, -R * 0.62, hy - 5, R * 0.55, 9, 3); c.fill();   // sunglasses
+    rrect(c, R * 0.07, hy - 5, R * 0.55, 9, 3); c.fill();
+    c.strokeStyle = '#d4161e'; c.lineWidth = 5;                                    // headphones
+    c.beginPath(); c.arc(0, hy, R + 3, Math.PI * 1.08, Math.PI * 1.92); c.stroke();
+    c.fillStyle = '#d4161e';
+    for (const s of [-1, 1]) { rrect(c, s * (R + 2) - 6, hy - 9, 12, 20, 5); c.fill(); }
+    c.restore();
+    // table
+    c.fillStyle = 'rgba(0,0,0,.35)'; c.beginPath(); c.ellipse(0, 2, 100, 10, 0, 0, TAU); c.fill();
+    c.fillStyle = '#26262e'; rrect(c, -92, -70, 184, 14, 4); c.fill();
+    for (const s of [-1, 1]) {                                                       // turntables
+      c.save(); c.translate(s * 46, -63); c.scale(1, 0.32);
+      c.fillStyle = '#0d0d10'; c.beginPath(); c.arc(0, 0, 30, 0, TAU); c.fill();
+      c.strokeStyle = '#2f2f38'; c.lineWidth = 3; c.beginPath(); c.arc(0, 0, 20, t * 6, t * 6 + 4); c.stroke();
+      c.fillStyle = '#d4161e'; c.beginPath(); c.arc(0, 0, 7, 0, TAU); c.fill();
+      c.restore();
+    }
+    const g = c.createLinearGradient(0, -56, 0, 0);
+    g.addColorStop(0, '#2c2c35'); g.addColorStop(1, '#141418');
+    c.fillStyle = g; rrect(c, -88, -58, 176, 58, 6); c.fill();
+    c.strokeStyle = '#f6c544'; c.lineWidth = 2; rrect(c, -88, -58, 176, 58, 6); c.stroke();
+    const cols = ['#ff3b5c', '#ffd23f', '#3fd0ff', '#7cff6b', '#c56bff'];
+    for (let i = 0; i < 12; i++) {                                                   // LED strip
+      const on = (Math.floor(beat * 2) + i) % 3 === 0;
+      c.fillStyle = on ? cols[i % cols.length] : 'rgba(255,255,255,.12)';
+      c.beginPath(); c.arc(-77 + i * 14, -36, 4.5, 0, TAU); c.fill();
+    }
+    c.fillStyle = '#f6c544'; c.font = `800 18px ${FONT}`; c.textAlign = 'center'; c.textBaseline = 'middle';
+    c.fillText('\u266b DJ \u266b', 0, -15);
+    c.restore();
+  }
+
+  // four kids in front of the stage, each with its own dance, drifting between two spots
+  const KIDS = [
+    { a: 150, b: 300, y: 1176, girl: 1, move: 'hop',  shirt: '#ff7aa8', skirt: '#ffd1e3' },
+    { a: 330, b: 430, y: 1188, girl: 0, move: 'spin', shirt: '#3fa7ff', legs: '#24324f' },
+    { a: 660, b: 780, y: 1188, girl: 1, move: 'clap', shirt: '#ffd23f', skirt: '#ff9f43' },
+    { a: 820, b: 900, y: 1178, girl: 0, move: 'side', shirt: '#7cdb6b', legs: '#2d3b2a' },
+  ];
+
+  function drawKid(c, k, i, t, beat) {
+    const period = 9 + i * 1.7;                               // walk to the other spot every few seconds
+    const cyc = (t / period + i * 0.37) % 1;
+    const tw = cyc < 0.5 ? 0 : 1, f = cyc < 0.5 ? cyc * 2 : (cyc - 0.5) * 2;
+    const moving = f > 0.8;
+    const p = moving ? (f - 0.8) / 0.2 : 0;
+    const from = tw ? k.b : k.a, to = tw ? k.a : k.b;
+    const x = from + (to - from) * p;
+    const step = beat * Math.PI;
+    let bob = -Math.abs(Math.sin(step)) * 6, jump = 0, flip = 1;
+    let hands = [{ x: -20, y: -70, bend: 6 }, { x: 20, y: -70, bend: 6 }];
+    let lf = { x: -7, y: 0 }, rf = { x: 7, y: 0 };
+    if (moving) {
+      lf = { x: -7 + Math.sin(t * 14) * 6, y: -Math.max(0, Math.sin(t * 14)) * 7 };
+      rf = { x: 7 - Math.sin(t * 14) * 6, y: -Math.max(0, -Math.sin(t * 14)) * 7 };
+      flip = to > from ? 1 : -1;
+    } else if (k.move === 'hop') {
+      jump = Math.abs(Math.sin(step)) * 18;
+      hands = [{ x: -22, y: -122, bend: -5 }, { x: 22, y: -122, bend: -5 }];
+    } else if (k.move === 'spin') {
+      flip = Math.cos(t * 4);
+      hands = [{ x: -30, y: -96, bend: 4 }, { x: 30, y: -96, bend: 4 }];
+    } else if (k.move === 'clap') {
+      const cl = Math.abs(Math.sin(step));
+      hands = [{ x: -4 - cl * 14, y: -100, bend: 4 }, { x: 4 + cl * 14, y: -100, bend: 4 }];
+    } else {
+      const sd = Math.sin(step * 0.5) * 12;
+      lf = { x: -7 + sd, y: 0 }; rf = { x: 7 + sd, y: 0 };
+      hands = [{ x: -24 + sd, y: -108 + Math.sin(step) * 10, bend: -4 }, { x: 24 + sd, y: -108 - Math.sin(step) * 10, bend: -4 }];
+    }
+    const sx = (flip < 0 ? -1 : 1) * Math.max(0.6, Math.abs(flip));   // turning, never paper-thin
+    // shadow stays on the floor while jumping
+    c.fillStyle = 'rgba(0,0,0,.32)'; c.beginPath(); c.ellipse(x, k.y + 1, 14, 4, 0, 0, TAU); c.fill();
+    c.save(); c.translate(x, k.y - jump); c.scale(0.62 * sx, 0.62);
+    const legs = k.girl ? '#efc6a0' : k.legs;
+    limb(c, -6, -50 + bob, lf.x, lf.y - 4, 9, legs, 0);
+    limb(c, 6, -50 + bob, rf.x, rf.y - 4, 9, legs, 0);
+    c.fillStyle = '#2b1a12';
+    for (const ft of [lf, rf]) { c.beginPath(); c.ellipse(ft.x, ft.y - 3, 8, 4, 0, 0, TAU); c.fill(); }
+    if (k.girl) {
+      c.fillStyle = k.skirt; c.beginPath(); c.moveTo(-14, -78 + bob); c.lineTo(14, -78 + bob); c.lineTo(24, -40 + bob); c.lineTo(-24, -40 + bob); c.closePath(); c.fill();
+    }
+    c.fillStyle = k.shirt; rrect(c, -15, -98 + bob, 30, k.girl ? 26 : 50, 8); c.fill();
+    for (const h of hands) {
+      limb(c, h.x < 0 ? -12 : 12, -94 + bob, h.x, h.y + bob * 0.5, 8, k.shirt, h.bend);
+      c.fillStyle = '#efc6a0'; c.beginPath(); c.arc(h.x, h.y + bob * 0.5, 4.5, 0, TAU); c.fill();
+    }
+    c.fillStyle = '#efc6a0'; c.fillRect(-4, -104 + bob, 8, 8);
+    drawFace(c, -124 + bob, 22, !!k.girl);
+    if (k.girl) { c.fillStyle = k.shirt; c.beginPath(); c.arc(16, -140 + bob, 6, 0, TAU); c.fill(); }   // hair bow
+    c.restore();
+  }
+
   // -----------------------------------------------------------
   // Main render
   // -----------------------------------------------------------
@@ -1174,6 +1309,9 @@ const Scene = (() => {
     if (party && now - lastConf > 300) { lastConf = now; confetti(6); }
 
     items.push(...krushItems(now));
+    // decoration: DJ booth (back left) and kids in front of the stage
+    items.push({ custom: c => drawDJ(c, t, beat), y: DJ.y });
+    KIDS.forEach((k, i) => items.push({ custom: c => drawKid(c, k, i, t, beat), y: k.y }));
 
     // depth sort & draw
     items.sort((a, b) => (a.e ? a.e.y : a.y) - (b.e ? b.e.y : b.y));
@@ -1189,6 +1327,7 @@ const Scene = (() => {
   const GHOST_INFO = { bride: 'nusja', groom: 'dhendri', bestman: 'shok', bridesmaid: 'shoqja', drummer: 'tupan' };
 
   function drawItem(c, it, now, t) {
+    if (it.custom) return it.custom(c);
     if (it.krushk) return drawKrushk(c, it);
     const ghost = !!it.ghost;
     const e = it.e;

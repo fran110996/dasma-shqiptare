@@ -271,7 +271,7 @@
 
   // ---------- socket ----------
   const socket = io();
-  const OVERLAY_VERSION = '2026-10-21a'; // keep in sync with CLIENT_VERSION in server/index.js
+  const OVERLAY_VERSION = '2026-10-29a'; // keep in sync with CLIENT_VERSION in server/index.js
   socket.on('connect', () => socket.emit('hello', { role: params.get('sound') === '0' ? 'preview' : 'overlay', v: OVERLAY_VERSION }));
 
   // self-heal: if the connection to the server stays down, force a reconnect and then reload the page,
@@ -304,7 +304,8 @@
     }
     renderLegend(s.config);
 
-    renderBoard(s.leaderboard);
+    $('board').hidden = !s.config.showLeaderboard;
+    if (s.config.showLeaderboard) renderBoard(s.leaderboard);
     renderMeters(s);
     Scene.sync(s);
     if (s.drummer) Sfx.drum(s.drummer.until - s.now + Date.now(), s.qejf.party);
