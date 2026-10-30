@@ -206,11 +206,37 @@ class WeddingEngine {
       this.partyUntil = Date.now() + config.partySeconds * 1000;
       this.qejf = 100;
       this.fx('party', { seconds: config.partySeconds });
+      this.broadcast();
     }
   }
 
+  // effects only go to the game screens (overlays join the 'screens' room), not to the control panel
   fx(type, payload) {
-    this.io.emit('fx', { type, ...payload });
+    this.io.to('screens').emit('fx', { type, ...payload });
+  }
+
+  // Likes arrive many times per second: send their effect and the meters in small batches
+  // instead of a message per like plus the whole game state (Render bills bandwidth)
+  queueLikeFx(count) {
+    this.likeBatch = (this.likeBatch || 0) + count;
+    if (this.likeTimer) return;
+    this.likeTimer = setTimeout(() => {
+      this.likeTimer = null;
+      this.fx('like', { count: this.likeBatch });
+      this.likeBatch = 0;
+    }, 500);
+  }
+
+  pushMeters() {
+    if (this.metersTimer) return;
+    this.metersTimer = setTimeout(() => {
+      this.metersTimer = null;
+      const qejfLevel = Math.min(3, Math.floor(this.qejf / 25.01));
+      this.io.emit('meters', {
+        qejf: { value: this.qejf, label: config.texts.qejfLevels[qejfLevel], party: Date.now() < this.partyUntil },
+        krushqit: this.krushqitProgress(), stats: this.stats, now: Date.now(),
+      });
+    }, 1000);
   }
 
   // Server logs only (Render → Logs), not shown in the control panel
@@ -231,7 +257,7 @@ class WeddingEngine {
     this.addQejf(3);
     this.fx('share', { user: this.publicUser(u), text: fmt(config.texts.share, { name: u.nickname }) });
     this.log(`🔗 ${u.nickname} shared the LIVE`);
-    this.broadcast();
+    this.pushMeters();
   }
 
   onFollow(data) {
@@ -239,7 +265,7 @@ class WeddingEngine {
     this.addQejf(2);
     this.fx('follow', { user: this.publicUser(u), text: fmt(config.texts.follow, { name: u.nickname }) });
     this.log(`➕ ${u.nickname} followed`);
-    this.broadcast();
+    this.pushMeters();
   }
 
   onLike(data) {
@@ -271,12 +297,13 @@ class WeddingEngine {
         this.log(`❤️ ${u.nickname} reached ~${Math.round(after)} likes (already in the wedding)`);
       } else {
         this.addDancer(u.userId);
+        this.broadcast();
         this.log(`❤️ ${u.nickname} reached ~${Math.round(after)} likes (TikTok delivering ${pct}%) → Futesh në valle`);
         this.fx('dancer', { user: this.publicUser(u), added: true, viaLikes: true, text: fmt(config.texts.likesJoined, { name: u.nickname }) });
       }
     }
-    this.fx('like', { user: this.publicUser(u), count, inScene: this.isInScene(u.userId) });
-    this.broadcast();
+    this.queueLikeFx(count);
+    this.pushMeters();
   }
 
   onComment(data) {
@@ -288,7 +315,7 @@ class WeddingEngine {
     if (this.isInScene(u.userId)) {
       this.fx('chat', { userId: u.userId, text, jump });
     }
-    this.broadcast();
+    this.pushMeters();
   }
 
   onGift(data) {
@@ -418,7 +445,8 @@ class WeddingEngine {
     if (now > this.partyUntil && this.qejf > 0) {
       const wasParty = this.partyUntil && now - this.partyUntil < 1500;
       this.qejf = wasParty ? 55 : Math.max(0, this.qejf - config.qejfDecayPerSec);
-      changed = true;
+      if (wasParty) changed = true;   // party ended: the scene changes
+      else this.pushMeters();         // only the meter moved: light update
     }
     if (changed) this.broadcast();
   }
@@ -460,16 +488,23 @@ class WeddingEngine {
 
   // Throttled state push (max ~2.5/s, it is sent to every open screen)
   broadcast(immediate = false) {
+    const send = () => {
+      const s = this.snapshot();
+      const key = JSON.stringify(s.config);
+      if (key === this.sentConfigKey) delete s.config;   // screens keep the last config they got
+      else this.sentConfigKey = key;
+      this.io.emit('state', s);
+    };
     if (immediate) {
       clearTimeout(this.broadcastTimer);
       this.broadcastTimer = null;
-      this.io.emit('state', this.snapshot());
+      send();
       return;
     }
     if (this.broadcastTimer) return;
     this.broadcastTimer = setTimeout(() => {
       this.broadcastTimer = null;
-      this.io.emit('state', this.snapshot());
+      send();
     }, 400);
   }
 }

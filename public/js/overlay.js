@@ -271,7 +271,7 @@
 
   // ---------- socket ----------
   const socket = io();
-  const OVERLAY_VERSION = '2026-10-29a'; // keep in sync with CLIENT_VERSION in server/index.js
+  const OVERLAY_VERSION = '2026-10-30a'; // keep in sync with CLIENT_VERSION in server/index.js
   socket.on('connect', () => socket.emit('hello', { role: params.get('sound') === '0' ? 'preview' : 'overlay', v: OVERLAY_VERSION }));
 
   // self-heal: if the connection to the server stays down, force a reconnect and then reload the page,
@@ -288,7 +288,17 @@
   // the page was paused (e.g. LIVE Studio in the background): check the connection as soon as it comes back
   document.addEventListener('visibilitychange', () => { if (!document.hidden && !socket.connected) socket.connect(); });
 
+  // light update sent on likes: only the meters change
+  socket.on('meters', m => {
+    if (!state) return;
+    Object.assign(state, m);
+    renderMeters(state);
+  });
+
+  let lastConfig = null;
   socket.on('state', s => {
+    if (s.config) lastConfig = s.config; else s.config = lastConfig;   // config only comes when it changes
+    if (!s.config) return;
     const hadDrummer = !!state?.drummer;
     state = s;
     texts = s.config.texts;

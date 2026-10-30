@@ -48,7 +48,7 @@ app.use(express.static(path.join(__dirname, '../public'), {
 }));
 
 // Bump together with OVERLAY_VERSION in public/js/overlay.js to spot overlays running old code
-const CLIENT_VERSION = '2026-10-29a';
+const CLIENT_VERSION = '2026-10-30a';
 
 const tiktok = new TikTokConnector();
 const sim = new Simulator();
@@ -294,6 +294,7 @@ function clientName(ua = '') {
 }
 io.on('connection', socket => {
   socket.on('hello', ({ role, v } = {}) => {
+    if (role === 'overlay' || role === 'preview') socket.join('screens');
     if (role !== 'overlay' || socket.data.overlay) return;
     socket.data.overlay = true;
     overlays++;

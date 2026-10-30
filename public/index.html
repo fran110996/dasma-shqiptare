@@ -136,7 +136,8 @@
     </section>
     <section>
       <h2>Preview</h2>
-      <div class="preview"><iframe src="/overlay?sound=0" title="Overlay preview"></iframe></div>
+      <!-- loaded only when asked: an open preview is a second game screen receiving everything -->
+      <div class="preview" id="preview"><button class="btn" id="previewBtn" style="margin:auto;display:block;position:relative;top:45%">👁 Show preview</button></div>
     </section>
   </div>
 </main>
@@ -211,7 +212,18 @@
   });
 
   socket.on('settings', s => { settings = s; $('vol').value = s.volume; $('musicBtn').textContent = `🎵 Music: ${s.music ? 'on' : 'off'}`; });
+  $('previewBtn').onclick = () => {
+    $('preview').innerHTML = '<iframe src="/overlay?sound=0" title="Overlay preview"></iframe>';
+  };
+  socket.on('meters', m => {
+    $('stGifts').textContent = m.stats.gifts.toLocaleString();
+    $('stCoins').textContent = m.stats.coins.toLocaleString();
+    $('stLikes').textContent = m.stats.likes.toLocaleString();
+  });
+  let lastConfig = null;
   socket.on('state', s => {
+    if (s.config) lastConfig = s.config; else s.config = lastConfig;
+    if (!s.config) return;
     $('stGifts').textContent = s.stats.gifts.toLocaleString();
     $('stCoins').textContent = s.stats.coins.toLocaleString();
     $('stLikes').textContent = s.stats.likes.toLocaleString();
