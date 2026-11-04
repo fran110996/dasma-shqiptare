@@ -1246,6 +1246,7 @@ const Scene = (() => {
     const sway = Math.sin(t * 1.7) * 4;
     const coupleBeat = Math.sin(beat * Math.PI * 0.5);
     for (const role of ['groom', 'bride']) {
+      if (state && !state.config.gifts.some(g => g.role === role)) continue;   // couple turned off in config
       const e = [...ents.values()].find(x => x.kind === role && !x.leaving) || [...ents.values()].find(x => x.kind === role);
       const P = POS[role];
       const other = POS[role === 'groom' ? 'bride' : 'groom'];

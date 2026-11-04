@@ -271,7 +271,7 @@
 
   // ---------- socket ----------
   const socket = io();
-  const OVERLAY_VERSION = '2026-10-30a'; // keep in sync with CLIENT_VERSION in server/index.js
+  const OVERLAY_VERSION = '2026-11-04a'; // keep in sync with CLIENT_VERSION in server/index.js
   socket.on('connect', () => socket.emit('hello', { role: params.get('sound') === '0' ? 'preview' : 'overlay', v: OVERLAY_VERSION }));
 
   // self-heal: if the connection to the server stays down, force a reconnect and then reload the page,
