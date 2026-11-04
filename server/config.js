@@ -13,10 +13,8 @@ module.exports = {
     { key: 'valle',    gift: 'Rosa',        aliases: [],                       coins: 10,  label: 'Futesh në valle',   icon: '💐', role: 'dancer', actionIcon: '💃' },
     { key: 'bakshish', gift: 'Confetti',    aliases: [],                       coins: 100, label: 'Bakshish',          icon: '🎉', role: 'money', actionIcon: '💸' },
     { key: 'dolli',    gift: 'Semsemia',    aliases: ['Sem Sem', 'Semsem'],    coins: 200, label: 'Dolli për çiftin',  icon: '🪕', role: 'toast', actionIcon: '🥂' },
-    // Bride and groom removed at the client's request (Nov 2026): uncomment to bring them back.
-    // Pink Cowboy / Train now fall to the closest lower gift (Dolli për çiftin).
-    // { key: 'nusja',    gift: 'Pink Cowboy', aliases: ['Cowboy'],               coins: 450, label: 'Nusja',             icon: '🤠', role: 'bride', actionIcon: '👰' },
-    // { key: 'dhendri',  gift: 'Train',       aliases: [],                       coins: 899, label: 'Dhëndri',           icon: '🚂', role: 'groom', actionIcon: '🤵' },
+    { key: 'nusja',    gift: 'Pink Cowboy', aliases: ['Cowboy'],               coins: 450, label: 'Nusja',             icon: '🤠', role: 'bride', actionIcon: '👰' },
+    { key: 'dhendri',  gift: 'Train',       aliases: [],                       coins: 899, label: 'Dhëndri',           icon: '🚂', role: 'groom', actionIcon: '🤵' },
   ],
 
   // KRUSHQIT event (10 Oct): every 50K likes in the LIVE (TikTok's total, the number viewers see)
@@ -49,7 +47,7 @@ module.exports = {
   //   'gifts'  = "Pink Cowboy = Nusja" with the gift icons
   //   false    = nothing about gifts on screen
   // Gifts keep working the same in every mode.
-  giftMenu: 'points',
+  giftMenu: false,   // the streamer shows the gift list with LIVE Studio's own widget
   // the BUJARET E DASMES panel (top gifters). The kumbari still leads the valle when it's hidden.
   showLeaderboard: false,
 
