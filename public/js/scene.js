@@ -1386,25 +1386,39 @@ const Scene = (() => {
   // ---------- camera: zoom in on whoever joins, then back to the full view ----------
   const Cam = (() => {
     const layers = [bgCanvas, sceneCanvas, fxCanvas];
-    const queue = [];
-    let cur = null, until = 0, z = 1, cx = W / 2, cy = H / 2, lastCss = '';
+    const BIG = new Set(['bride', 'groom']);   // always worth a close-up, even on a busy LIVE
+    let next = null, nextAt = 0, cur = null, until = 0, restUntil = 0, busyUntil = 0;
+    const joins = [];
+    let z = 1, cx = W / 2, cy = H / 2, fx_ = W / 2, fy_ = H / 2, lastCss = '';
     const opts = () => state?.config?.camera || {};
     return {
       focus(e) {
-        if (!opts().enabled || performance.now() - startT < 3000) return;   // not on the first sync after a reload
-        if (queue.length >= 3 || queue.includes(e) || cur === e) return;   // busy LIVE: skip instead of lagging behind
-        queue.push(e);
+        const now = performance.now();
+        if (!opts().enabled || now - startT < 3000) return;   // not on the first sync after a reload
+        joins.push(now);
+        while (joins.length && now - joins[0] > 6000) joins.shift();
+        if (joins.length >= 3) busyUntil = now + 6000;        // lots of people joining: stay on the full view
+        if (BIG.has(e.kind)) { next = e; nextAt = now; return; }   // bride / groom win over anyone waiting
+        if (now < busyUntil) { next = next && BIG.has(next.kind) ? next : null; return; }
+        if (!next) { next = e; nextAt = now + 800; }          // wait a moment: if more people follow, skip the zoom
       },
       update(dt, now) {
         const o = opts();
-        if (cur && (now > until || cur.leaving || !ents.has(cur.key))) cur = null;
-        if (!cur && queue.length && o.enabled) {
-          cur = queue.shift();
-          until = now + (o.seconds || 3.5) * 1000 * (queue.length ? 0.7 : 1);
+        if (cur && (now > until || cur.leaving || !ents.has(cur.key) || (now < busyUntil && !BIG.has(cur.kind)))) {
+          cur = null; restUntil = now + 2000;                 // back to the full view for a moment
         }
+        if (next && (next.leaving || !ents.has(next.key))) next = null;
+        if (next && !BIG.has(next.kind) && now < busyUntil) next = null;
+        if (!cur && next && o.enabled && now >= nextAt && (now > restUntil || BIG.has(next.kind))) {
+          cur = next; next = null;
+          until = now + (o.seconds || 3.5) * 1000;
+          fx_ = cur.x; fy_ = cur.y;
+        }
+        // follow the person softly (dancers keep moving round the valle)
+        if (cur) { const f = 1 - Math.pow(0.2, dt); fx_ += (cur.x - fx_) * f; fy_ += (cur.y - fy_) * f; }
         const tz = cur ? (o.zoom || 1.7) : 1;
-        const tx = cur ? cur.x : W / 2, ty = cur ? cur.y - 150 * (cur.s || 1) : H / 2;
-        const k = 1 - Math.pow(0.04, dt);
+        const tx = cur ? fx_ : W / 2, ty = cur ? fy_ - 150 * (cur.s || 1) : H / 2;
+        const k = 1 - Math.pow(0.08, dt);
         z += (tz - z) * k; cx += (tx - cx) * k; cy += (ty - cy) * k;
         // keep the view inside the picture
         const hw = W / 2 / z, hh = H / 2 / z;
