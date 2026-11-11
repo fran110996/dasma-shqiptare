@@ -14,6 +14,8 @@ const Scene = (() => {
   const FONT = "'Baloo 2', system-ui, sans-serif";
   const STAGE = { cx: 560, cy: 1000, rx: 350, ry: 84 };
   const SPACING = 0.40;               // radians between dancers in the valle chain
+  const INNER = 16;                   // dancers in the inner valle; the rest dance in a second, outer valle
+  const OUTER = { rx: 428, ry: 112, spacing: TAU / 14 };
   const PILE_BASE = 1240;
   const POS = {
     groom: { x: 512, y: 1004, s: 1.12 },
@@ -659,6 +661,7 @@ const Scene = (() => {
         gender: hash(user.id) % 2, bubble: null, jumpT: 0, x: 0, y: 0, s: 1 };
       ents.set(key, e);
       burstAt(e, kind);
+      Cam.focus(e);
     }
     e.user = user;
     Object.assign(e, extra);
@@ -704,15 +707,22 @@ const Scene = (() => {
     const list = [...ents.values()].filter(e => e.kind === 'dancer');
     base += dt * (party ? 0.24 : 0.11);
     for (const e of list) {
+      const ring = e.slot < INNER ? 0 : 1;
+      if (e.ring !== ring) { e.slotSmooth = e.slot; e.ring = ring; }   // moved to the other valle: glide there below
       e.slotSmooth += (e.slot - e.slotSmooth) * Math.min(1, dt * 2.5);
-      const a = base - e.slotSmooth * SPACING;
+      // the outer valle turns the other way, like two chains of a real valle
+      const a = ring ? -base * 0.8 + (e.slotSmooth - INNER) * OUTER.spacing : base - e.slotSmooth * SPACING;
+      const rx = ring ? OUTER.rx : STAGE.rx, ry = ring ? OUTER.ry : STAGE.ry;
       const depth = (Math.sin(a) + 1) / 2;
+      const tx = STAGE.cx + Math.cos(a) * rx, ty = STAGE.cy + Math.sin(a) * ry;
+      if (!e.placed) { e.x = tx; e.y = ty; e.placed = true; }
+      else { const k = Math.min(1, dt * 7); e.x += (tx - e.x) * k; e.y += (ty - e.y) * k; }
       e.angle = a;
-      e.x = STAGE.cx + Math.cos(a) * STAGE.rx;
-      e.y = STAGE.cy + Math.sin(a) * STAGE.ry;
-      e.s = 0.8 + 0.2 * depth;
+      e.s = (ring ? 0.76 : 0.8) + 0.2 * depth;
     }
-    return list.filter(e => !e.leaving).sort((a, b) => a.slot - b.slot);
+    const out = list.filter(e => !e.leaving).sort((a, b) => a.slot - b.slot);
+    out.forEach((e, i) => { e.lead = i === 0 || out[i - 1].ring !== e.ring; });
+    return out;
   }
 
   function burstAt(e, kind) {
@@ -1212,6 +1222,7 @@ const Scene = (() => {
     for (const e of ents.values()) if (e.kind === 'dancer' && e.leaving && !poses.has(e)) poses.set(e, computeDancerPose(e, t, beat, 0, 1));
     for (let i = 0; i < dancers.length - 1; i++) {
       const a = dancers[i], b = dancers[i + 1];
+      if (a.ring !== b.ring) continue;   // the two valle chains don't hold hands with each other
       const pa = poses.get(a), pb = poses.get(b);
       const dir = Math.sign(b.x - a.x) || 1;
       const sa = { x: a.x + dir * 17 * a.s, y: a.y + (-124 + pa.bob) * a.s };
@@ -1228,7 +1239,7 @@ const Scene = (() => {
         const used = p.hands.length ? Math.sign(p.hands[0].x) : 0;
         const free = used ? -used : null;
         for (const side of free ? [free] : [-1, 1]) {
-          if (i === 0 && (free ? true : side === (dancers.length > 1 ? 1 : -1))) {
+          if (e.lead && (free ? true : side === (dancers.length > 1 ? 1 : -1))) {
             p.hands.push({ x: side * 30 + Math.sin(t * 6) * 5, y: -178, bend: -4, hanky: t }); // leader waves the handkerchief
           } else {
             p.hands.push({ x: side * 24 + Math.sin(beat * Math.PI) * 3, y: -88 + p.bob, bend: 2 });
@@ -1322,8 +1333,41 @@ const Scene = (() => {
     ctx.drawImage(pileCanvas, 0, pileTop);
 
     updateParticles(dt, t);
+    Cam.update(dt, now);
     requestAnimationFrame(frame);
   }
+
+  // ---------- camera: zoom in on whoever joins, then back to the full view ----------
+  const Cam = (() => {
+    const layers = [bgCanvas, sceneCanvas, fxCanvas];
+    const queue = [];
+    let cur = null, until = 0, z = 1, cx = W / 2, cy = H / 2, lastCss = '';
+    const opts = () => state?.config?.camera || {};
+    return {
+      focus(e) {
+        if (!opts().enabled || performance.now() - startT < 3000) return;   // not on the first sync after a reload
+        if (queue.length >= 3 || queue.includes(e) || cur === e) return;   // busy LIVE: skip instead of lagging behind
+        queue.push(e);
+      },
+      update(dt, now) {
+        const o = opts();
+        if (cur && (now > until || cur.leaving || !ents.has(cur.key))) cur = null;
+        if (!cur && queue.length && o.enabled) {
+          cur = queue.shift();
+          until = now + (o.seconds || 3.5) * 1000 * (queue.length ? 0.7 : 1);
+        }
+        const tz = cur ? (o.zoom || 1.7) : 1;
+        const tx = cur ? cur.x : W / 2, ty = cur ? cur.y - 150 * (cur.s || 1) : H / 2;
+        const k = 1 - Math.pow(0.04, dt);
+        z += (tz - z) * k; cx += (tx - cx) * k; cy += (ty - cy) * k;
+        // keep the view inside the picture
+        const hw = W / 2 / z, hh = H / 2 / z;
+        const vx = Math.min(W - hw, Math.max(hw, cx)), vy = Math.min(H - hh, Math.max(hh, cy));
+        const css = Math.abs(z - 1) < 0.002 ? '' : `translate(${(W / 2 - vx * z).toFixed(1)}px, ${(H / 2 - vy * z).toFixed(1)}px) scale(${z.toFixed(4)})`;
+        if (css !== lastCss) { lastCss = css; for (const c of layers) { c.style.transformOrigin = '0 0'; c.style.transform = css; } }
+      },
+    };
+  })();
 
   const GHOST_INFO = { bride: 'nusja', groom: 'dhendri', bestman: 'shok', bridesmaid: 'shoqja', drummer: 'tupan' };
 

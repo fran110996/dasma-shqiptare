@@ -50,10 +50,12 @@ module.exports = {
   giftMenu: false,   // the streamer shows the gift list with LIVE Studio's own widget
   // the BUJARET E DASMES panel (top gifters). The kumbari still leads the valle when it's hidden.
   showLeaderboard: false,
+  // camera zooms in on whoever joins, then goes back to the full view
+  camera: { enabled: true, zoom: 1.7, seconds: 3.5 },
 
   // Any gift worth at least this many coins also puts the sender in the dance
   joinDanceMinCoins: 10,
-  maxDancers: 16,
+  maxDancers: 30,   // 16 in the inner valle + 14 in the outer one
   maxBestMen: 2,
   maxBridesmaids: 2,
 
