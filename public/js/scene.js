@@ -159,6 +159,49 @@ const Scene = (() => {
       }
     }
 
+    // Hall floor down to the bottom of the screen (wood in perspective)
+    const VPX = W / 2, VPY = 520, FY = 975;
+    g = c.createLinearGradient(0, FY, 0, H);
+    g.addColorStop(0, '#2a1108'); g.addColorStop(0.35, '#5a2a12'); g.addColorStop(1, '#3a1a0b');
+    c.fillStyle = g; c.fillRect(0, FY, W, H - FY);
+    c.strokeStyle = 'rgba(0,0,0,.30)'; c.lineWidth = 2;
+    for (let i = -14; i <= 14; i++) {          // boards running toward the stage
+      const xb = VPX + i * 120;
+      const k = (FY - VPY) / (H - VPY);
+      c.beginPath(); c.moveTo(VPX + (xb - VPX) * k, FY); c.lineTo(xb, H); c.stroke();
+    }
+    for (let y = FY + 14, step = 16; y < H; y += step, step *= 1.12) {   // board joints, wider apart near the camera
+      c.strokeStyle = 'rgba(0,0,0,.22)'; c.beginPath(); c.moveTo(0, y); c.lineTo(W, y); c.stroke();
+      c.strokeStyle = 'rgba(255,190,120,.05)'; c.beginPath(); c.moveTo(0, y + 2); c.lineTo(W, y + 2); c.stroke();
+    }
+    // Red aisle carpet leading to the dance floor
+    const at = 1150, aw0 = 150, aw1 = 300;
+    c.beginPath(); c.moveTo(VPX - aw0, at); c.lineTo(VPX + aw0, at); c.lineTo(VPX + aw1, H); c.lineTo(VPX - aw1, H); c.closePath();
+    g = c.createLinearGradient(0, at, 0, H); g.addColorStop(0, '#7c0a10'); g.addColorStop(1, '#a5121a');
+    c.fillStyle = g; c.fill();
+    for (const s of [-1, 1]) {
+      c.strokeStyle = '#e8b33c'; c.lineWidth = 7;
+      c.beginPath(); c.moveTo(VPX + s * (aw0 - 10), at); c.lineTo(VPX + s * (aw1 - 18), H); c.stroke();
+      c.strokeStyle = '#111'; c.lineWidth = 3;
+      c.beginPath(); c.moveTo(VPX + s * (aw0 - 22), at); c.lineTo(VPX + s * (aw1 - 42), H); c.stroke();
+    }
+    for (let y = at + 60, sz = 14; y < H; y += sz * 6, sz *= 1.14) {   // eagle-red diamonds down the middle
+      c.save(); c.translate(VPX, y); c.scale(1, 0.55); c.rotate(Math.PI / 4);
+      c.fillStyle = '#f0c04a'; c.fillRect(-sz, -sz, sz * 2, sz * 2);
+      c.fillStyle = '#111'; c.fillRect(-sz * 0.45, -sz * 0.45, sz * 0.9, sz * 0.9);
+      c.restore();
+    }
+    // Rose petals scattered on the floor
+    let seedP = 7; const rp = () => (seedP = (seedP * 16807) % 2147483647) / 2147483647;
+    for (let i = 0; i < 140; i++) {
+      const y = 1180 + Math.pow(rp(), 0.8) * (H - 1180), sc = 0.6 + (y - 1180) / (H - 1180);
+      c.save(); c.translate(rp() * W, y); c.rotate(rp() * TAU); c.scale(sc, sc * 0.6);
+      c.fillStyle = ['#e41e20', '#ff5a6a', '#ffb3c1', '#c8101a'][i % 4]; c.globalAlpha = 0.85;
+      c.beginPath(); c.ellipse(0, 0, 9, 5, 0, 0, TAU); c.fill();
+      c.restore();
+    }
+    c.globalAlpha = 1;
+
     // Stage platform
     c.save();
     c.beginPath(); c.ellipse(STAGE.cx, STAGE.cy + 30, 600, 190, 0, 0, TAU); c.clip();
@@ -185,10 +228,13 @@ const Scene = (() => {
       c.fillStyle = i % 2 ? '#111' : '#f0c04a'; c.fillRect(-6, -6, 12, 12);
       c.restore();
     }
-    // Bottom floor fade (covered by TikTok chat anyway)
-    g = c.createLinearGradient(0, 1180, 0, H);
-    g.addColorStop(0, 'rgba(10,1,2,0)'); g.addColorStop(0.2, 'rgba(10,1,2,.85)'); g.addColorStop(1, '#050001');
-    c.fillStyle = g; c.fillRect(0, 1180, W, H - 1180);
+    // Soft shade at the very bottom so TikTok's chat stays readable over the floor
+    g = c.createLinearGradient(0, 1450, 0, H);
+    g.addColorStop(0, 'rgba(10,1,2,0)'); g.addColorStop(1, 'rgba(10,1,2,.55)');
+    c.fillStyle = g; c.fillRect(0, 1450, W, H - 1450);
+    g = c.createLinearGradient(0, 0, W, 0);   // darker sides
+    g.addColorStop(0, 'rgba(0,0,0,.45)'); g.addColorStop(0.18, 'rgba(0,0,0,0)'); g.addColorStop(0.82, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,.45)');
+    c.fillStyle = g; c.fillRect(0, FY, W, H - FY);
   }
 
   // -----------------------------------------------------------
