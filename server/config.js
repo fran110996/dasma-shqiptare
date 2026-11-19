@@ -52,6 +52,8 @@ module.exports = {
   showLeaderboard: false,
   // camera zooms in on whoever joins, then goes back to the full view
   camera: { enabled: true, zoom: 1.7, seconds: 3.5 },
+  // false = lights off: dark hall, only the dancers and effects are lit. Switch it live from the panel.
+  lights: false,
 
   // Any gift worth at least this many coins also puts the sender in the dance
   joinDanceMinCoins: 10,

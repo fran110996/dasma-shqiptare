@@ -48,13 +48,13 @@ app.use(express.static(path.join(__dirname, '../public'), {
 }));
 
 // Bump together with OVERLAY_VERSION in public/js/overlay.js to spot overlays running old code
-const CLIENT_VERSION = '2026-11-19a';
+const CLIENT_VERSION = '2026-11-19b';
 
 const tiktok = new TikTokConnector();
 const sim = new Simulator();
 const game = new WeddingEngine(io);
 
-const settings = { volume: 0.7, music: true };
+const settings = { volume: 0.7, music: true, lights: require('./config').lights !== false };
 
 // -------------------------------------------------------
 // Wire events → game (real and simulated share the same handlers)
@@ -247,6 +247,7 @@ app.post('/api/settings', (req, res) => {
   const { volume, music } = req.body || {};
   if (typeof volume === 'number') settings.volume = Math.max(0, Math.min(1, volume));
   if (typeof music === 'boolean') settings.music = music;
+  if (typeof req.body?.lights === 'boolean') settings.lights = req.body.lights;
   io.emit('settings', settings);
   res.json({ ok: true, settings });
 });

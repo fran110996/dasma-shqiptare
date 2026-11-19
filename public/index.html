@@ -111,6 +111,7 @@
       <div class="row">
         <div><label>Volume</label><input type="range" id="vol" min="0" max="1" step="0.05" value="0.7"></div>
         <div style="flex:0;min-width:auto"><label>&nbsp;</label><button id="musicBtn">🎵 Music: on</button></div>
+        <div style="flex:0;min-width:auto"><label>&nbsp;</label><button id="lightsBtn">💡 Lights: on</button></div>
       </div>
       <div class="np-row">
         <div class="np-now"><span class="np-label">Now playing</span><b id="musicNow">—</b></div>
@@ -182,6 +183,7 @@
   document.querySelectorAll('[data-test]').forEach(b => b.onclick = () => post('/api/test', { type: b.dataset.test, text: b.dataset.text }));
   $('vol').oninput = e => post('/api/settings', { volume: Number(e.target.value) });
   $('musicBtn').onclick = () => post('/api/settings', { music: !settings.music });
+  $('lightsBtn').onclick = () => post('/api/settings', { lights: settings.lights === false });
 
   socket.on('status', s => {
     status = s;
@@ -211,7 +213,7 @@
     if (songsLoaded) markSong();
   });
 
-  socket.on('settings', s => { settings = s; $('vol').value = s.volume; $('musicBtn').textContent = `🎵 Music: ${s.music ? 'on' : 'off'}`; });
+  socket.on('settings', s => { settings = s; $('vol').value = s.volume; $('musicBtn').textContent = `🎵 Music: ${s.music ? 'on' : 'off'}`; $('lightsBtn').textContent = `💡 Lights: ${s.lights === false ? 'off' : 'on'}`; });
   $('previewBtn').onclick = () => {
     $('preview').innerHTML = '<iframe src="/overlay?sound=0" title="Overlay preview"></iframe>';
   };

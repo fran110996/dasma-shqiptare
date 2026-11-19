@@ -271,7 +271,7 @@
 
   // ---------- socket ----------
   const socket = io();
-  const OVERLAY_VERSION = '2026-11-19a'; // keep in sync with CLIENT_VERSION in server/index.js
+  const OVERLAY_VERSION = '2026-11-19b'; // keep in sync with CLIENT_VERSION in server/index.js
   socket.on('connect', () => socket.emit('hello', { role: params.get('sound') === '0' ? 'preview' : 'overlay', v: OVERLAY_VERSION }));
 
   // self-heal: if the connection to the server stays down, force a reconnect and then reload the page,
@@ -343,6 +343,7 @@
   socket.on('settings', st => {
     if (params.get('vol') == null) Sfx.setVolume(st.volume);
     if (!muted) Sfx.setMusic(st.music);
+    Scene.setLights(st.lights !== false);
     updateNowPlaying();
   });
 

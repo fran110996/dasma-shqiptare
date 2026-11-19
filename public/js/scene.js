@@ -240,6 +240,7 @@ const Scene = (() => {
   // -----------------------------------------------------------
   // Albanian flag (double-headed eagle), drawn once then waved
   // -----------------------------------------------------------
+  let lightsOn = true;
   const flagCanvas = document.createElement('canvas');
   flagCanvas.width = POS.flag.w; flagCanvas.height = POS.flag.h;
 
@@ -1253,7 +1254,7 @@ const Scene = (() => {
 
     ctx.clearRect(0, 0, W, H);
     drawLights(ctx, t, party);
-    drawFlag(ctx, t);
+    if (lightsOn) drawFlag(ctx, t);
     drawSpotlights(ctx, t, party);
 
     // remove faded-out entities
@@ -1561,6 +1562,8 @@ const Scene = (() => {
     sparkleUser(userId) { for (const e of entsOf(userId)) sparks(e.x, e.y - 160 * e.s, 30); },
     clearPile() { pileCanvas.getContext('2d').clearRect(0, 0, W, 300); heights.fill(0); },
     isParty: () => party,
+    // lights off: hide the painted hall (curtains, floor, flag); dancers and effects stay
+    setLights(on) { lightsOn = on; bgCanvas.style.visibility = on ? '' : 'hidden'; },
     krushqit(people, seconds, elapsed = 0, opts = {}) { startKrush(people, seconds, elapsed, opts); },
     toast(seconds, text) {
       startToast(seconds);
