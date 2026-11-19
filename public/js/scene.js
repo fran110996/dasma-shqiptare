@@ -1522,6 +1522,18 @@ const Scene = (() => {
   // -----------------------------------------------------------
   // Public API
   // -----------------------------------------------------------
+  // The background and the flag are painted once. If the browser drops the graphics memory
+  // (GPU reset, low memory in LIVE Studio/OBS), those canvases come back empty: the wedding
+  // "goes dark". Repaint them when that happens.
+  function repaintStatic() { drawBackground(); drawFlagTexture(); }
+  function looksEmpty(c, x, y) {
+    try { return c.getContext('2d').getImageData(x, y, 1, 1).data[3] === 0; } catch { return false; }
+  }
+  for (const c of [bgCanvas, flagCanvas]) c.addEventListener('contextrestored', repaintStatic);
+  setInterval(() => {
+    if (looksEmpty(bgCanvas, 540, 1500) || looksEmpty(bgCanvas, 20, 20) || looksEmpty(flagCanvas, 10, 10)) repaintStatic();
+  }, 5000);
+
   function init() {
     drawBackground();
     drawFlagTexture();
